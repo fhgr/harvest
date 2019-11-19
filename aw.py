@@ -58,7 +58,6 @@ def get_matching_element(comment, dom):
     for e in dom.iter():
         text = (e.text or "").strip()
         if text and comment.startswith(text[:MATCH_PREFIX_SIZE]):
-            print("Found text in", e, e.tag)
             return e
 
     print("Cannot find path for comment >>>" + comment + "<<<")
@@ -101,7 +100,7 @@ def get_xpath(comment, dom):
 
 def get_xpath_tree(comment, dom, tree):
     element = get_matching_element(comment, dom)
-    return tree.getpath(element) if element else None
+    return None if element is None else tree.getpath(element)
 
 
 def get_similarity_metric(reference_content, dom, xpath):
@@ -131,5 +130,5 @@ for no, fname in enumerate(glob(CORPUS + "/*.json")):
         content_comments = extract_comments(example['html'])
         for comment in content_comments.split("\n"):
             xpath = get_xpath_tree(comment, dom, tree)
-            # print(xpath, get_xpath(comment, dom))
+            print(xpath, '-->', get_xpath(comment, dom))
         exit(0)
