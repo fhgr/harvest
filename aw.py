@@ -70,7 +70,7 @@ def get_xpath_expression(element):
     -------
     the xpath expression for the given element
     '''
-    attr_filter = " & ".join(['%s="%s"' % (key, value) for key, value in element.attrib.items() if key in VALID_NODE_TYPE_QUALIFIERS])
+    attr_filter = " & ".join(['@%s="%s"' % (key, value) for key, value in element.attrib.items() if key in VALID_NODE_TYPE_QUALIFIERS])
     if attr_filter:
         return element.tag + "[%s]" % attr_filter
     else:
@@ -87,7 +87,7 @@ def get_xpath(comment, dom):
     has_class_filter = False
     element = get_matching_element(comment, dom)
 
-    while not has_class_filter and element:
+    while not has_class_filter and element is not None:
         xpath_expression = get_xpath_expression(element)
         has_class_filter = "[" in xpath_expression
         xpath_list.append(xpath_expression)
@@ -95,7 +95,7 @@ def get_xpath(comment, dom):
         element = element.getparent()
 
     xpath_list.reverse()
-    return "/".join(xpath_list)
+    return "//" + "/".join(xpath_list)
 
 
 def get_xpath_tree(comment, dom, tree):
