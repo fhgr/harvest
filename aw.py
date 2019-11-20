@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Forum Extraction AI and heuristic
+# ---------------------------------
+# (C)opyrights 2019 Albert Weichselbraun
+
 # potential improvements
 # ======================
 #
@@ -11,6 +15,12 @@
 # ================
 # - only consider tags with a class attribute
 # - vsm based on the hashing trick
+
+# algorithm
+# =========
+# - match text to xpath nodes
+# - extract the text based on the xpath nodes and determine the best match based on the node + its children
+# - from the best match that yields multiple results (i.e. forum posts) select node parent elements as long as we still get the same number of results
 
 
 from dragnet import extract_content_and_comments, extract_comments
@@ -47,9 +57,12 @@ def text_to_vsm(text):
 
 
 def get_xpath_tree_text(dom, xpath):
-    text = ' '.join([extract_text(element) for element in dom.xpath(xpath)])
-    # print("\n\nXPath:" + xpath + "\n\nText:" + text + "\n----------------------")
-    return text
+    '''
+    returns
+    -------
+    a list of text obtained by all elements matching the given xpath
+    '''
+    return [extract_text(element) for element in dom.xpath(xpath)]
 
 def extract_text(element):
     ''' obtains the text for the given element '''
@@ -110,30 +123,26 @@ def get_xpath_tree(comment, dom, tree):
     return None if element is None else tree.getpath(element)
 
 
-def get_similarity_metrics(reference_content, dom, xpath):
+def assess_node(reference_content, dom, xpath):
     '''
     returns
     -------
-    a list of similarity metrics fromt the orignal xpath to its ancestors
+    a metric that is based on 
+      (i) the vector space model and
+     (ii) the number of returned elements
+    to assess whether the node is likely to be part of a forum post.
     '''
-    result = []
-    for a in range(4):
-        result.append(get_similarity_metric(reference_content, dom, xpath))
-        xpath += "/.."
+    if xpath == "//":
+        return 0., 1
 
-    return ", ".join(map(str, result))
+    xpath_content_list = get_xpath_tree_text(dom, xpath)
+    xpath_element_count = len(xpath_content_list)
 
+    reference_vsm = text_to_vsm(reference_content)
+    xpath_vsm = text_to_vsm(' '.join(xpath_content_list))
 
-def get_similarity_metric(reference_content, dom, xpath):
-    '''
-    returns
-    -------
-    a metric based on the vector space model that indicates
-    how well the given xpath fits the reference content.
-    '''
-    reference = text_to_vsm(reference_content)
-    xpath_content = text_to_vsm(get_xpath_tree_text(dom, xpath))
-    return np.dot(reference, xpath_content)/(np.linalg.norm(reference) * np.linalg.norm(xpath_content))
+    similarity = np.dot(reference_vsm, xpath_vsm)/(np.linalg.norm(reference_vsm) * np.linalg.norm(xpath_vsm))
+    return (similarity, xpath_element_count)
 
 
 for no, fname in enumerate(glob(CORPUS + "/*.json")):
@@ -149,13 +158,31 @@ for no, fname in enumerate(glob(CORPUS + "/*.json")):
         dom = etree.HTML(html)
         tree = etree.ElementTree(dom)
         content_comments = extract_comments(example['html'])
+
+        candidate_xpaths = []
         for comment in content_comments.split("\n"):
             xpath = get_xpath_tree(comment, dom, tree)
             xpath_pattern = get_xpath(comment, dom)
-            if xpath:
-                print(xpath, '-->', xpath_pattern, get_similarity_metrics(reference_content=content_comments, dom=dom, xpath=xpath_pattern))
-            else:
-                print("Cannot find an xpath for", comment)
+
+            xpath_score, xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=xpath_pattern)
+            if xpath_element_count > 1:
+                candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
+
+        # obtain anchor node
+        candidate_xpaths.sort()
+        xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
+
+        while True:
+            new_xpath_pattern = xpath_pattern + "/.."
+            new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=new_xpath_pattern)
+            if new_xpath_element_count < min(3, xpath_element_count/2):
+                break
+
+            xpath_pattern = new_xpath_pattern
+            xpath_score = new_xpath_score
+
+        print("Obtained most likely forum xpath:", xpath_pattern, "with a node score of", xpath_score)
+
         exit(0)
 
 
