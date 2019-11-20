@@ -42,6 +42,9 @@ MATCH_PREFIX_SIZE = 30
 VSM_MODEL_SIZE = 5000
 VALID_NODE_TYPE_QUALIFIERS = ('class', )
 
+# minimum number of posts we suspect on the page
+MIN_POST_COUNT = 3
+
 def text_to_vsm(text):
     '''
     translates a text into the vector space model
@@ -168,6 +171,10 @@ for no, fname in enumerate(glob(CORPUS + "/*.json")):
             if xpath_element_count > 1:
                 candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
+        if not candidate_xpaths:
+            print("Couldn't identify any candidate posts for forum", example['url'])
+            continue
+
         # obtain anchor node
         candidate_xpaths.sort()
         xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
@@ -175,14 +182,15 @@ for no, fname in enumerate(glob(CORPUS + "/*.json")):
         while True:
             new_xpath_pattern = xpath_pattern + "/.."
             new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=new_xpath_pattern)
-            if new_xpath_element_count < min(3, xpath_element_count/2):
+            if new_xpath_element_count < MIN_POST_COUNT:
                 break
 
             xpath_pattern = new_xpath_pattern
             xpath_score = new_xpath_score
 
-        print("Obtained most likely forum xpath:", xpath_pattern, "with a node score of", xpath_score)
+        print(no, "Obtained most likely forum xpath for forum", example['url'] + ":", xpath_pattern, "with a node score of", xpath_score)
 
-        exit(0)
+        if no > 10:
+            exit(0)
 
 
