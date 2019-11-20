@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
 
+# potential improvements
+# ======================
+#
+# - include background knowledge
+#   - blacklist hmlt/head, aside, ...
+# - remove text found in blacklisted paths, to increase the metric's accuracy
+
+# simplifications:
+# ================
+# - only consider tags with a class attribute
+# - vsm based on the hashing trick
+
+
 from dragnet import extract_content_and_comments, extract_comments
 from lxml import etree
 from glob import glob
@@ -19,13 +32,6 @@ MATCH_PREFIX_SIZE = 30
 VSM_MODEL_SIZE = 5000
 VALID_NODE_TYPE_QUALIFIERS = ('class', )
 
-# background knowledge to include:
-# - blacklist hmlt/head, aside, ...
-
-# simplifications:
-# - only consider tags with a class attribute
-# - vsm based on the hashing trick
-
 def text_to_vsm(text):
     '''
     translates a text into the vector space model
@@ -36,12 +42,12 @@ def text_to_vsm(text):
     vms = np.full(VSM_MODEL_SIZE, 0)
     for word in text.split():
         index = word.__hash__() % VSM_MODEL_SIZE
-        word[index] += 1
+        vms[index] += 1
     return vms
 
 
 def get_xpath_tree_text(dom, xpath):
-    return extract_text(dom.xpath(xpath))
+    return ' '.join([extract_text(element) for element in dom.xpath(xpath)])
 
 
 def extract_text(element):
@@ -130,5 +136,10 @@ for no, fname in enumerate(glob(CORPUS + "/*.json")):
         content_comments = extract_comments(example['html'])
         for comment in content_comments.split("\n"):
             xpath = get_xpath_tree(comment, dom, tree)
-            print(xpath, '-->', get_xpath(comment, dom))
+            if xpath:
+                print(xpath, '-->', get_xpath(comment, dom), get_similarity_metric(reference_content=content_comments, dom=dom, xpath=xpath))
+            else:
+                print("Cannot find an xpath for", comment)
         exit(0)
+
+
