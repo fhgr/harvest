@@ -47,8 +47,9 @@ def text_to_vsm(text):
 
 
 def get_xpath_tree_text(dom, xpath):
-    return ' '.join([extract_text(element) for element in dom.xpath(xpath)])
-
+    text = ' '.join([extract_text(element) for element in dom.xpath(xpath)])
+    print("\n\n" + xpath + "\n\n" + text + "\n----------------------")
+    return text
 
 def extract_text(element):
     ''' obtains the text for the given element '''
