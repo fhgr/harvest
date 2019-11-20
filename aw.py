@@ -48,7 +48,7 @@ def text_to_vsm(text):
 
 def get_xpath_tree_text(dom, xpath):
     text = ' '.join([extract_text(element) for element in dom.xpath(xpath)])
-    print("\n\n" + xpath + "\n\n" + text + "\n----------------------")
+    # print("\n\nXPath:" + xpath + "\n\nText:" + text + "\n----------------------")
     return text
 
 def extract_text(element):
@@ -110,6 +110,20 @@ def get_xpath_tree(comment, dom, tree):
     return None if element is None else tree.getpath(element)
 
 
+def get_similarity_metrics(reference_content, dom, xpath):
+    '''
+    returns
+    -------
+    a list of similarity metrics fromt the orignal xpath to its ancestors
+    '''
+    result = []
+    for a in range(4):
+        result.append(get_similarity_metric(reference_content, dom, xpath))
+        xpath += "/.."
+
+    return ", ".join(map(str, result))
+
+
 def get_similarity_metric(reference_content, dom, xpath):
     '''
     returns
@@ -137,8 +151,9 @@ for no, fname in enumerate(glob(CORPUS + "/*.json")):
         content_comments = extract_comments(example['html'])
         for comment in content_comments.split("\n"):
             xpath = get_xpath_tree(comment, dom, tree)
+            xpath_pattern = get_xpath(comment, dom)
             if xpath:
-                print(xpath, '-->', get_xpath(comment, dom), get_similarity_metric(reference_content=content_comments, dom=dom, xpath=xpath))
+                print(xpath, '-->', xpath_pattern, get_similarity_metrics(reference_content=content_comments, dom=dom, xpath=xpath_pattern))
             else:
                 print("Cannot find an xpath for", comment)
         exit(0)
