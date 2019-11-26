@@ -21,6 +21,9 @@
 # - match text to xpath nodes
 # - extract the text based on the xpath nodes and determine the best match based on the node + its children
 # - from the best match that yields multiple results (i.e. forum posts) select node parent elements as long as we still get the same number of results
+# - constraints
+#   - blocked tags are not allowed to appear down- or upstream of the selected path (e.g. it is not possible that a forum post contains a 'form' or 'input' element :)
+
 
 
 from urllib.parse import urlparse
@@ -173,21 +176,19 @@ def assess_node(reference_content, dom, xpath):
     return (similarity, xpath_element_count)
 
 
+logging.getLogger().setLevel(logging.INFO)
 result = {}
 for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
      opener = gzip.open if fname.endswith(".gz") else open
      with opener(fname) as f:
-        print("Opening", fname)
         example = load(f)
+        if not 'maladiesrares' in example['url']:
+            continue
 
         with open("%s.html" % no, "w") as g:
             g.write(example['html'])
 
-
-        if not 'maladiesrares' in example['url']:
-            continue
-
-        print(example['url'])
+        logging.info(example['url'])
         domain = urlparse(example['url']).netloc
 
         if domain not in result:
@@ -200,18 +201,21 @@ for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
 
         comments = []
         # remove blacklisted items and use inscriptis if dragnet has failed
+        content_comments = get_text(html)
         for comment in [c for c in (content_comments.split("\n") if content_comments else get_text(html).split()) if c.strip()]:
             if not comment.strip():
                 continue
             elif not 'copyright' in comment.lower():
-                comments.append(comment)
+                comments.append(comment.strip())
             else:
                 break
         reference_content = " ".join(comments)
 
         candidate_xpaths = []
+        logging.info("Extracted %d lines of comments.", len(comments))
         for comment in comments:
             xpath = get_xpath_tree(comment, dom, tree)
+            logging.info("Processing commment '%s' with xpath '%s'.", comment, xpath)
             if not xpath or contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
                 continue
             xpath_pattern = get_xpath(comment, dom)
