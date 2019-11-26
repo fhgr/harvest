@@ -52,7 +52,7 @@ VSM_MODEL_SIZE = 5000
 VALID_NODE_TYPE_QUALIFIERS = ('class', )
 
 # tags that are not allowed to be part of a forum xpath (lowercase)
-BLACKLIST_TAGS = ('/option', '/footer', '/form')
+BLACKLIST_TAGS = ('option', 'footer', 'form')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -141,7 +141,7 @@ def get_xpath_tree(comment, dom, tree):
 
 
 def decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
-    decendants = set(chain(*[e.iterdescendants() for e in dom.xpath(xpath)]))
+    decendants = set([t.tag for t in chain(*[e.iterdescendants() for e in dom.xpath(xpath)])])
     for tag in blacklisted_tags:
         if tag in decendants:
             return True
@@ -153,8 +153,9 @@ def ancestors_contains_blacklisted_tag(xpath_string, blacklisted_tags):
     -------
     True, if the xpath_string (i.e. the ancestors) contains any blacklisted_tag
     '''
+    xpath = xpath_string.split("/")
     for tag in blacklisted_tags:
-        if tag in xpath_string:
+        if tag in xpath:
             return True
     return False
 
@@ -171,6 +172,7 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
     '''
     if xpath == "//" or decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
         return 0., 1
+    print(xpath, "does not contain blacklisted decendants", set([t.tag for t in chain(*[e.iterdescendants() for e in dom.xpath(xpath)])]) )
 
     xpath_content_list = get_xpath_tree_text(dom, xpath)
     xpath_element_count = len(xpath_content_list)
