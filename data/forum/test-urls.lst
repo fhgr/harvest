@@ -1,0 +1,60 @@
+##
+## aproach: mirror all - extract content from forum posts
+##          provide flags to obtain views that are accessible to the crawler
+##          - problems: recrawls
+##          - disambiguation and URL assignment (just number posts and add a #n)?
+
+
+##
+## multiple sklerosis
+## 
+
+# overview pages and comments on forum posts
+https://www.medhelp.org/posts/Multiple-Sclerosis/Positive-ANA-Test/show/1123552
+# overview pages
+https://www.msconnection.org/Discussions/f33/t77364/tp1/How-long-is-too-long-to-wait-for-an-initial-con
+https://shift.ms/page/1
+# not a real forum, but rather a blog with single posts (!) very hard - since an absolutely non standard layout
+https://www.uninterrupted.org.au/blog-category/my-ms-journey
+# nested overview pages
+https://www.msworld.org/forum/showthread.php?145403-Sort-of-new-here
+# leicht parsebare ansicht; default: baumstruktur, kaum parsebar
+https://www.amsel.de/multiple-sklerose-forum/?tnr=1&mnr=217239&archiv_flag=2&fv=1
+
+##
+## emerging viri
+## 
+https://www.medhelp.org/posts/Infectious-Diseases/Noro-or-other-virus/show/1881254
+
+##
+## parkinson
+##
+
+# provides json-ld
+https://healthunlocked.com/parkinsonsmovement/posts/142058845/artane-anyone
+# post overview page
+https://www.healingwell.com/community/default.aspx?f=34&m=4099304
+# distinguishes between question and posts
+https://www.medhelp.org/posts/Heart-Disease/Wolfe-Parkinson-White-Syndrome/show/250747
+# mailing list
+https://myparkinsons.org/cgi-bin/forum/topic_show.pl?id=5231
+
+
+##
+## angelman
+##
+
+# implementation via google search not feasible; but direct mirroring of the forum's content
+https://www.mumsnet.com/Talk/pregnancy/3749275-Pregnant-with-a-black-mixed-race-with-black-baby
+# DONE & works - overview pages
+http://blog.angelman-asa.org/read.php?2,736
+# beautiful standard forum :)))
+https://forums.maladiesraresinfo.org/post11011.html#p11011
+
+##
+## COPD - not yet classified; choosing some samples only
+## 
+
+https://www.medschat.com/Discuss/how-important-is-this-medician-G-E-Sulfamethoxazole-TMP-DS-Tabitp-to-take-due-to-COPD-206090.htm?srcq=copd
+# search interface has completely changed
+https://community.scope.org.uk/discussion/57774/copd

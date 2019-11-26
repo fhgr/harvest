@@ -23,24 +23,32 @@
 # - from the best match that yields multiple results (i.e. forum posts) select node parent elements as long as we still get the same number of results
 
 
-from dragnet import extract_content_and_comments, extract_comments
+from urllib.parse import urlparse
 from lxml import etree
 from glob import glob
-from json import load
-
+from json import load, dump
 from sys import exit
 
+from dragnet import extract_content_and_comments, extract_comments
+from inscriptis import get_text
+
+import gzip
+import logging
 import re
 import numpy as np
 
 
 RE_FILTER_XML_HEADER = re.compile("<\?xml version=\".*? encoding=.*?\?>")
-CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
+#CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
+CORPUS = "./data/forum/"
 
 # number of characters required for a match
 MATCH_PREFIX_SIZE = 30
 VSM_MODEL_SIZE = 5000
 VALID_NODE_TYPE_QUALIFIERS = ('class', )
+
+# tags that are not allowed to be part of a forum xpath (lowercase)
+BLACKLIST_TAGS = ('/option', '/footer', '/form')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -78,12 +86,14 @@ def get_matching_element(comment, dom):
     -------
     the element that matches the given comment
     '''
+    if not comment.strip():
+        return None
+
     for e in dom.iter():
         text = (e.text or "").strip()
         if text and comment.startswith(text[:MATCH_PREFIX_SIZE]):
             return e
 
-    print("Cannot find path for comment >>>" + comment + "<<<")
     return None
 
 
@@ -125,6 +135,17 @@ def get_xpath_tree(comment, dom, tree):
     element = get_matching_element(comment, dom)
     return None if element is None else tree.getpath(element)
 
+def contains_blacklisted_tag(xpath_string, blacklisted_tags):
+    '''
+    returns
+    -------
+    True, if the xpath_string contains any blacklisted_tag
+    '''
+    for tag in blacklisted_tags:
+        if tag in xpath_string:
+            return True
+    return False
+
 
 def assess_node(reference_content, dom, xpath):
     '''
@@ -144,36 +165,66 @@ def assess_node(reference_content, dom, xpath):
     reference_vsm = text_to_vsm(reference_content)
     xpath_vsm = text_to_vsm(' '.join(xpath_content_list))
 
-    similarity = np.dot(reference_vsm, xpath_vsm)/(np.linalg.norm(reference_vsm) * np.linalg.norm(xpath_vsm))
+    divisor = (np.linalg.norm(reference_vsm) * np.linalg.norm(xpath_vsm))
+    if not divisor:
+        logging.warning("Cannot compute simularity - empty reference (%s) or xpath (%ss) text.", reference_content, ' '.join(xpath_content_list))
+        return 0., 1
+    similarity = np.dot(reference_vsm, xpath_vsm)/divisor
     return (similarity, xpath_element_count)
 
 
-for no, fname in enumerate(glob(CORPUS + "/*.json")):
-    with open(fname) as f:
+result = {}
+for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
+     opener = gzip.open if fname.endswith(".gz") else open
+     with opener(fname) as f:
+        print("Opening", fname)
         example = load(f)
 
         with open("%s.html" % no, "w") as g:
             g.write(example['html'])
 
+
+        if not 'maladiesrares' in example['url']:
+            continue
+
         print(example['url'])
+        domain = urlparse(example['url']).netloc
+
+        if domain not in result:
+            result[domain] = []
 
         html = RE_FILTER_XML_HEADER.sub("", example['html'])
         dom = etree.HTML(html)
         tree = etree.ElementTree(dom)
-        content_comments = extract_comments(example['html'])
+        content_comments = extract_comments(example['html']).strip()
+
+        comments = []
+        # remove blacklisted items and use inscriptis if dragnet has failed
+        for comment in [c for c in (content_comments.split("\n") if content_comments else get_text(html).split()) if c.strip()]:
+            if not comment.strip():
+                continue
+            elif not 'copyright' in comment.lower():
+                comments.append(comment)
+            else:
+                break
+        reference_content = " ".join(comments)
 
         candidate_xpaths = []
-        for comment in content_comments.split("\n"):
+        for comment in comments:
             xpath = get_xpath_tree(comment, dom, tree)
+            if not xpath or contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
+                continue
             xpath_pattern = get_xpath(comment, dom)
 
-            xpath_score, xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=xpath_pattern)
+            xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom, xpath=xpath_pattern)
             if xpath_element_count > 1:
                 candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
         if not candidate_xpaths:
             print("Couldn't identify any candidate posts for forum", example['url'])
+            result[domain].append({'url': example['url'], 'dragnet': content_comments})
             continue
+
 
         # obtain anchor node
         candidate_xpaths.sort()
@@ -189,8 +240,11 @@ for no, fname in enumerate(glob(CORPUS + "/*.json")):
             xpath_score = new_xpath_score
 
         print(no, "Obtained most likely forum xpath for forum", example['url'] + ":", xpath_pattern, "with a node score of", xpath_score)
+        if xpath_pattern:
+            forum_posts = [extract_text(element) for element in dom.xpath(xpath_pattern)]
+        result[domain].append({'url': example['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments})
 
-        if no > 10:
-            exit(0)
 
+with open("results.json", "w") as f:
+    dump(result, f, indent=True)
 
