@@ -31,6 +31,7 @@ from lxml import etree
 from glob import glob
 from json import load, dump
 from sys import exit
+from itertools import chain
 
 from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
@@ -136,13 +137,21 @@ def get_xpath(comment, dom):
 
 def get_xpath_tree(comment, dom, tree):
     element = get_matching_element(comment, dom)
-    return None if element is None else tree.getpath(element)
+    return (None, None) if element is None else (element, tree.getpath(element))
 
-def contains_blacklisted_tag(xpath_string, blacklisted_tags):
+
+def decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
+    decendants = set(chain(*[e.iterdescendants() for e in dom.xpath(xpath)]))
+    for tag in blacklisted_tags:
+        if tag in decendants:
+            return True
+    return False
+
+def ancestors_contains_blacklisted_tag(xpath_string, blacklisted_tags):
     '''
     returns
     -------
-    True, if the xpath_string contains any blacklisted_tag
+    True, if the xpath_string (i.e. the ancestors) contains any blacklisted_tag
     '''
     for tag in blacklisted_tags:
         if tag in xpath_string:
@@ -150,16 +159,17 @@ def contains_blacklisted_tag(xpath_string, blacklisted_tags):
     return False
 
 
-def assess_node(reference_content, dom, xpath):
+def assess_node(reference_content, dom, xpath, blacklisted_tags):
     '''
     returns
     -------
     a metric that is based on 
       (i) the vector space model and
      (ii) the number of returned elements
+    (iii) whether the descendants contain any blacklisted tags
     to assess whether the node is likely to be part of a forum post.
     '''
-    if xpath == "//":
+    if xpath == "//" or decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
         return 0., 1
 
     xpath_content_list = get_xpath_tree_text(dom, xpath)
@@ -214,13 +224,13 @@ for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
         candidate_xpaths = []
         logging.info("Extracted %d lines of comments.", len(comments))
         for comment in comments:
-            xpath = get_xpath_tree(comment, dom, tree)
+            element, xpath = get_xpath_tree(comment, dom, tree)
             logging.info("Processing commment '%s' with xpath '%s'.", comment, xpath)
-            if not xpath or contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
+            if not xpath or ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
                 continue
             xpath_pattern = get_xpath(comment, dom)
 
-            xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom, xpath=xpath_pattern)
+            xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom, xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
             if xpath_element_count > 1:
                 candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
@@ -236,7 +246,7 @@ for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
 
         while True:
             new_xpath_pattern = xpath_pattern + "/.."
-            new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=new_xpath_pattern)
+            new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=new_xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
             if new_xpath_element_count < MIN_POST_COUNT:
                 break
 
