@@ -23,7 +23,20 @@
 # - from the best match that yields multiple results (i.e. forum posts) select node parent elements as long as we still get the same number of results
 # - constraints
 #   - blocked tags are not allowed to appear down- or upstream of the selected path (e.g. it is not possible that a forum post contains a 'form' or 'input' element :)
+#   - there are forums that are contained in a form tag .... 
+#   - changed algorithm:
+#     - do not let additional BLACKLIST_TAGS be entered
+#     - strongly discount paths that contain BLACKLIST_TAGS
 
+# open issues
+# -----------
+# * mumsnet -> does not detect first post (//div[@class="talk-post  message"]/p/../.."]) rather than //div[@class="post "])
+# * amsel.de -> only get's every second post (//td[@class="forum_message bg_7"]/..) due to different coloring ... 
+# * www.msconnection.org -> does not work
+
+# suggestions
+# -----------
+# * remove posts that exceed a certain length and URL threshold (spam) - compare: http://blog.angelman-asa.org (liuchunkai)
 
 
 from urllib.parse import urlparse
@@ -172,7 +185,6 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
     '''
     if xpath == "//" or decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
         return 0., 1
-    print(xpath, "does not contain blacklisted decendants", set([t.tag for t in chain(*[e.iterdescendants() for e in dom.xpath(xpath)])]) )
 
     xpath_content_list = get_xpath_tree_text(dom, xpath)
     xpath_element_count = len(xpath_content_list)
@@ -185,6 +197,10 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
         logging.warning("Cannot compute simularity - empty reference (%s) or xpath (%ss) text.", reference_content, ' '.join(xpath_content_list))
         return 0., 1
     similarity = np.dot(reference_vsm, xpath_vsm)/divisor
+    
+    # discount any node that contains BLACKLIST_TAGS
+    if ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
+        similarity /= 10
     return (similarity, xpath_element_count)
 
 
@@ -194,10 +210,10 @@ for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
      opener = gzip.open if fname.endswith(".gz") else open
      with opener(fname) as f:
         example = load(f)
-        if not 'maladiesrares' in example['url']:
-            continue
+        # if not 'healingwell' in example['url']:
+        #     continue
 
-        with open("%s.html" % no, "w") as g:
+        with open("%s-%s.html" % (no, urlparse(example['url']).netloc), "w") as g:
             g.write(example['html'])
 
         logging.info(example['url'])
@@ -228,7 +244,7 @@ for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
         for comment in comments:
             element, xpath = get_xpath_tree(comment, dom, tree)
             logging.info("Processing commment '%s' with xpath '%s'.", comment, xpath)
-            if not xpath or ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
+            if not xpath:
                 continue
             xpath_pattern = get_xpath(comment, dom)
 
