@@ -29,8 +29,8 @@ with open("test-urls.lst") as f:
                 encoding = 'utf8'
             html = http.read().decode(encoding)
             
-            with zip.open(dst + ".json.gz", 'w') as f:
+            with open(dst + ".json", 'w') as f:
                 dump({'url': url, 'html': html}, f)
-        except:
+        except IOError:
             with open("failed.lst", "a") as f:
                 f.write(url + "\n")

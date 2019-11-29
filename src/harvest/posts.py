@@ -37,7 +37,7 @@
 # -----------
 # * mumsnet -> does not detect first post (//div[@class="talk-post  message"]/p/../.."]) rather than //div[@class="post "])
 # * amsel.de -> only get's every second post (//td[@class="forum_message bg_7"]/..) due to different coloring ... 
-# * www.msconnection.org -> works well, but does not get the title of the first post
+# * www.msconnection.org, shift.ms -> works well, but does not get the title of the first post
 
 # determine post URL
 # ------------------

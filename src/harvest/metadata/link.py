@@ -14,6 +14,7 @@ from harvest.utils import get_xpath_expression
 
 # strategy
 # --------
+# * consider decendndants as well as elements at the same level
 # * the number of URL candidates must be identical to the number of posts ;)
 
 def get_link(dom, post_xpath, base_url):
@@ -23,7 +24,7 @@ def get_link(dom, post_xpath, base_url):
     url_candidates = defaultdict(lambda: {'elements': [],
                                           'is_forum_path': True,
                                           'is_same_resource': True})
-    post_elements = dom.xpath(post_xpath)
+    post_elements = dom.xpath(post_xpath + "/..")
 
     # collect candidate paths
     for element in post_elements:
@@ -32,7 +33,7 @@ def get_link(dom, post_xpath, base_url):
                 xpath = get_xpath_expression(tag)
                 # anchor tags with the name attribute will
                 # lead to the post
-                if 'name' in tag.attrib:
+                if 'name' in (attr.lower() for attr in tag.attrib):
                     logging.info("Computed URL xpath for forum %s.", base_url)
                     return xpath
 
