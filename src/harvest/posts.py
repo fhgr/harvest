@@ -11,6 +11,11 @@
 #   - blacklist hmlt/head, aside, ...
 # - remove text found in blacklisted paths, to increase the metric's accuracy
 
+# todo
+# ====
+# * post metadata extraction framework
+# * post cleanup framework
+
 # simplifications:
 # ================
 # - only consider tags with a class attribute
@@ -32,7 +37,22 @@
 # -----------
 # * mumsnet -> does not detect first post (//div[@class="talk-post  message"]/p/../.."]) rather than //div[@class="post "])
 # * amsel.de -> only get's every second post (//td[@class="forum_message bg_7"]/..) due to different coloring ... 
-# * www.msconnection.org -> does not work
+# * www.msconnection.org -> works well, but does not get the title of the first post
+
+# determine post URL
+# ------------------
+# * relevant tags: <a> (href or name)
+# * point to the same domain, or even better also to the same page (without parameters)
+# * appear always in the same element
+
+# cleanup posts
+# -------------
+# * remove repeated elements
+# * appear at the beginning or end of a post
+# * may contain information on 
+#   - user
+#   - date (subscription versus post date) => always compare dates within a page for computing the date extraction rule
+#   - replies, likes, etc.
 
 # suggestions
 # -----------
