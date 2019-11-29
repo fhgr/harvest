@@ -63,6 +63,7 @@ from lxml import etree
 from sys import exit
 from itertools import chain
 
+from harvest.utils import get_xpath_expression
 from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
@@ -77,10 +78,9 @@ CORPUS = "./data/forum/"
 # number of characters required for a match
 MATCH_PREFIX_SIZE = 30
 VSM_MODEL_SIZE = 5000
-VALID_NODE_TYPE_QUALIFIERS = ('class', )
 
 # tags that are not allowed to be part of a forum xpath (lowercase)
-BLACKLIST_TAGS = ('option', 'footer', 'form')
+BLACKLIST_TAGS = ('option', 'footer', 'form', 'aside', 'head', 'tfoot')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -127,40 +127,6 @@ def get_matching_element(comment, dom):
             return e
 
     return None
-
-
-def get_xpath_expression(element):
-    '''
-    returns
-    -------
-    the xpath expression for the given element
-    '''
-    attr_filter = " & ".join(['@%s="%s"' % (key, value) for key, value in element.attrib.items() if key in VALID_NODE_TYPE_QUALIFIERS])
-    if attr_filter:
-        return element.tag + "[%s]" % attr_filter
-    else:
-        return element.tag
-    
- 
-def get_xpath(comment, dom):
-    '''
-    returns
-    -------
-    the xpath for the given comment.
-    '''
-    xpath_list = []
-    has_class_filter = False
-    element = get_matching_element(comment, dom)
-
-    while not has_class_filter and element is not None:
-        xpath_expression = get_xpath_expression(element)
-        has_class_filter = "[" in xpath_expression
-        xpath_list.append(xpath_expression)
-
-        element = element.getparent()
-
-    xpath_list.reverse()
-    return "//" + "/".join(xpath_list)
 
 
 def get_xpath_tree(comment, dom, tree):
@@ -244,7 +210,8 @@ def extract_posts(forum):
         logging.info("Processing commment '%s' with xpath '%s'.", comment, xpath)
         if not xpath:
             continue
-        xpath_pattern = get_xpath(comment, dom)
+        element = get_matching_element(comment, dom)
+        xpath_pattern = get_xpath_expression(element)
 
         xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom, xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
         if xpath_element_count > 1:
@@ -268,9 +235,13 @@ def extract_posts(forum):
         xpath_pattern = new_xpath_pattern
         xpath_score = new_xpath_score
 
-    logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'] , xpath_pattern, xpath_score)
+    logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern, xpath_score)
     if xpath_pattern:
         forum_posts = [extract_text(element) for element in dom.xpath(xpath_pattern)]
-    return {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
 
+    result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
+    url_xpath_pattern = get_link(dom, xpath_pattern, form['url'])
+    if url_xpath_pattern:
+        result['url_xpath_pattern'] = url_xpath_pattern
+    return result
 
