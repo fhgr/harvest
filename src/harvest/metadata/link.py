@@ -33,6 +33,7 @@ def get_link(dom, post_xpath, base_url):
                 # anchor tags with the name attribute will
                 # lead to the post
                 if 'name' in tag.attrib:
+                    logging.info("Computed URL xpath for forum %s.", base_url)
                     return xpath
 
                 url_candidates[xpath]['elements'].append(tag)
@@ -47,7 +48,8 @@ def get_link(dom, post_xpath, base_url):
     forum_url = urlparse(base_url)
     for xpath, matches in list(url_candidates.items()):
         current_url_path = ''
-        for match in matches:
+        for match in matches['elements']:
+            logging.info("Match attribs: %s of type %s.", match, type(match))
             parsed_url = urlparse(match.attrib.get('href', ''))
             if parsed_url.netloc != forum_url.netloc:
                 del url_candidates[xpath]
@@ -66,8 +68,9 @@ def get_link(dom, post_xpath, base_url):
     logging.info("%d rather than one URL candidate remaining. "
                  "Sorting candidates.", len(url_candidates))
     for xpath, _ in sorted(url_candidates.items(),
-                           key=lambda x: (x[1][1], x[1][2]),
-                           reversed=True):
+                           key=lambda x: (x[1]['is_forum_path'], x[1]['is_same_resource']),
+                           reverse=True):
+        logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath
 
     return None

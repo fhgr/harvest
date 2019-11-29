@@ -64,6 +64,7 @@ from sys import exit
 from itertools import chain
 
 from harvest.utils import get_xpath_expression
+from harvest.metadata.link import get_link
 from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
@@ -204,10 +205,10 @@ def extract_posts(forum):
     reference_content = " ".join(comments)
 
     candidate_xpaths = []
-    logging.info("Extracted %d lines of comments.", len(comments))
+    logging.debug("Extracted %d lines of comments.", len(comments))
     for comment in comments:
         element, xpath = get_xpath_tree(comment, dom, tree)
-        logging.info("Processing commment '%s' with xpath '%s'.", comment, xpath)
+        logging.debug("Processing commment '%s' with xpath '%s'.", comment, xpath)
         if not xpath:
             continue
         element = get_matching_element(comment, dom)
@@ -240,7 +241,7 @@ def extract_posts(forum):
         forum_posts = [extract_text(element) for element in dom.xpath(xpath_pattern)]
 
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
-    url_xpath_pattern = get_link(dom, xpath_pattern, form['url'])
+    url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'])
     if url_xpath_pattern:
         result['url_xpath_pattern'] = url_xpath_pattern
     return result
