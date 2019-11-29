@@ -59,21 +59,16 @@
 # * remove posts that exceed a certain length and URL threshold (spam) - compare: http://blog.angelman-asa.org (liuchunkai)
 
 
-from urllib.parse import urlparse
 from lxml import etree
-from glob import glob
-from json import load, dump
 from sys import exit
 from itertools import chain
 
 from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
-import gzip
 import logging
 import re
 import numpy as np
-
 
 RE_FILTER_XML_HEADER = re.compile("<\?xml version=\".*? encoding=.*?\?>")
 #CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
@@ -224,79 +219,58 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
     return (similarity, xpath_element_count)
 
 
-logging.getLogger().setLevel(logging.INFO)
-result = {}
-for no, fname in enumerate(glob(CORPUS + "*.json.gz")):
-     opener = gzip.open if fname.endswith(".gz") else open
-     with opener(fname) as f:
-        example = load(f)
-        # if not 'healingwell' in example['url']:
-        #     continue
+def extract_posts(forum):
+    html = RE_FILTER_XML_HEADER.sub("", forum['html'])
+    dom = etree.HTML(html)
+    tree = etree.ElementTree(dom)
+    content_comments = extract_comments(forum['html']).strip()
 
-        with open("%s-%s.html" % (no, urlparse(example['url']).netloc), "w") as g:
-            g.write(example['html'])
-
-        logging.info(example['url'])
-        domain = urlparse(example['url']).netloc
-
-        if domain not in result:
-            result[domain] = []
-
-        html = RE_FILTER_XML_HEADER.sub("", example['html'])
-        dom = etree.HTML(html)
-        tree = etree.ElementTree(dom)
-        content_comments = extract_comments(example['html']).strip()
-
-        comments = []
-        # remove blacklisted items and use inscriptis if dragnet has failed
-        content_comments = get_text(html)
-        for comment in [c for c in (content_comments.split("\n") if content_comments else get_text(html).split()) if c.strip()]:
-            if not comment.strip():
-                continue
-            elif not 'copyright' in comment.lower():
-                comments.append(comment.strip())
-            else:
-                break
-        reference_content = " ".join(comments)
-
-        candidate_xpaths = []
-        logging.info("Extracted %d lines of comments.", len(comments))
-        for comment in comments:
-            element, xpath = get_xpath_tree(comment, dom, tree)
-            logging.info("Processing commment '%s' with xpath '%s'.", comment, xpath)
-            if not xpath:
-                continue
-            xpath_pattern = get_xpath(comment, dom)
-
-            xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom, xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
-            if xpath_element_count > 1:
-                candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
-
-        if not candidate_xpaths:
-            print("Couldn't identify any candidate posts for forum", example['url'])
-            result[domain].append({'url': example['url'], 'dragnet': content_comments})
+    comments = []
+    # remove blacklisted items and use inscriptis if dragnet has failed
+    content_comments = get_text(html)
+    for comment in [c for c in (content_comments.split("\n") if content_comments else get_text(html).split()) if c.strip()]:
+        if not comment.strip():
             continue
+        elif not 'copyright' in comment.lower():
+            comments.append(comment.strip())
+        else:
+            break
+    reference_content = " ".join(comments)
+
+    candidate_xpaths = []
+    logging.info("Extracted %d lines of comments.", len(comments))
+    for comment in comments:
+        element, xpath = get_xpath_tree(comment, dom, tree)
+        logging.info("Processing commment '%s' with xpath '%s'.", comment, xpath)
+        if not xpath:
+            continue
+        xpath_pattern = get_xpath(comment, dom)
+
+        xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom, xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
+        if xpath_element_count > 1:
+            candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
+
+    if not candidate_xpaths:
+        logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
+        return {'url': forum['url'], 'dragnet': content_comments}
 
 
-        # obtain anchor node
-        candidate_xpaths.sort()
-        xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
+    # obtain anchor node
+    candidate_xpaths.sort()
+    xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
 
-        while True:
-            new_xpath_pattern = xpath_pattern + "/.."
-            new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=new_xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
-            if new_xpath_element_count < MIN_POST_COUNT:
-                break
+    while True:
+        new_xpath_pattern = xpath_pattern + "/.."
+        new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=new_xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
+        if new_xpath_element_count < MIN_POST_COUNT:
+            break
 
-            xpath_pattern = new_xpath_pattern
-            xpath_score = new_xpath_score
+        xpath_pattern = new_xpath_pattern
+        xpath_score = new_xpath_score
 
-        print(no, "Obtained most likely forum xpath for forum", example['url'] + ":", xpath_pattern, "with a node score of", xpath_score)
-        if xpath_pattern:
-            forum_posts = [extract_text(element) for element in dom.xpath(xpath_pattern)]
-        result[domain].append({'url': example['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments})
+    logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'] , xpath_pattern, xpath_score)
+    if xpath_pattern:
+        forum_posts = [extract_text(element) for element in dom.xpath(xpath_pattern)]
+    return {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
 
-
-with open("results.json", "w") as f:
-    dump(result, f, indent=True)
 
