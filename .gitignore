@@ -2,3 +2,4 @@
 *.pyo
 .*.swp
 __pycache__/
+.cache/
