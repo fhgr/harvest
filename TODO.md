@@ -1,5 +1,8 @@
 # Open issues
 
+## post extraction
+- detect lead posts (compare: mumsnet.com)
+
 ## URL extraction
 
 - healthunlocked.com: replies do not have any URL
@@ -8,7 +11,8 @@
 
 ## date extraction
 
-
+- workaround for lead elements:
+  -> consider the number of posts or the number of posts + a spare for the main post
 
 ## user extraction
 

@@ -64,8 +64,10 @@ def get_date(dom, post_xpath, base_url, forum_posts):
 
     # filter candidate paths that do not yield a date for every post
     for xpath, matches in list(date_candidates.items()):
-        if len(matches['elements']) != len(forum_posts):
+        # consider the number of posts or the number of posts + a spare for the main post
+        if len(matches['elements']) != len(forum_posts) and len(matches['elements']) != (len(forum_posts) + 1):
             del date_candidates[xpath]
+
 
     # rank candidates based on the following criteria
     # - they must yield a date for every post
