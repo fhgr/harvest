@@ -237,7 +237,7 @@ def extract_posts(forum):
     logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern, xpath_score)
     if xpath_pattern:
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
-        # forum_posts = remove_boilerplate(forum_posts)
+        forum_posts = remove_boilerplate(forum_posts)
 
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
 
