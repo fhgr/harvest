@@ -4,6 +4,15 @@ Functions that are shared across modules.
 
 VALID_NODE_TYPE_QUALIFIERS = ('class', )
 
+def extract_text(element):
+    ''' 
+    returns
+    -------
+    the text for the given element 
+    '''
+    return ' '.join([t.strip() for t in element.itertext() if t.strip()])
+
+
 def get_xpath_expression(element):
     '''
     returns

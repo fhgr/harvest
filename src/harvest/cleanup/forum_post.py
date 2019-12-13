@@ -59,6 +59,17 @@ def remove_prefix(post_list):
     else:
         return [' '.join(posts.split(' ')[prefix_count:]) for posts in post_list]
 
+def remove_boilerplate(post_list):
+    prefix_count = compute_common_prefix_count(post_list)
+    suffix_count = compute_common_suffix_count(post_list)
+    if prefix_count == 0 and suffix_count == 0:
+        return post_list
+    else:
+        return [' '.join(posts.split(' ')[prefix_count:-suffix_count]) for posts in post_list]
+
+#
+# testing
+#
 def test_remove_suffix():
     post_list = ['Good day', 'Good Saturday', 'Good Wednesday']
     assert remove_suffix(post_list) == post_list

@@ -63,8 +63,10 @@ from lxml import etree
 from sys import exit
 from itertools import chain
 
-from harvest.utils import get_xpath_expression
+from harvest.cleanup.forum_post import remove_boilerplate
+from harvest.utils import get_xpath_expression, extract_text
 from harvest.metadata.link import get_link
+from harvest.metadata.date import get_date
 from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
@@ -107,10 +109,6 @@ def get_xpath_tree_text(dom, xpath):
     a list of text obtained by all elements matching the given xpath
     '''
     return [extract_text(element) for element in dom.xpath(xpath)]
-
-def extract_text(element):
-    ''' obtains the text for the given element '''
-    return ' '.join([t.strip() for t in element.itertext() if t.strip()])
 
 
 def get_matching_element(comment, dom):
@@ -239,10 +237,17 @@ def extract_posts(forum):
     logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern, xpath_score)
     if xpath_pattern:
         forum_posts = [extract_text(element) for element in dom.xpath(xpath_pattern)]
+        forum_posts = remove_boilerplate(forum_posts)
 
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
+
+    # get the post URL
     url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'])
     if url_xpath_pattern:
         result['url_xpath_pattern'] = url_xpath_pattern
+    # get the post Date
+    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'])
+    if date_xpath_pattern:
+        result['date_xpath_pattern'] = date_xpath_pattern
     return result
 
