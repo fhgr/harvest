@@ -2,7 +2,7 @@
 link
 ----
 
-Tries to obtain the URL of the given post
+Tries to obtain the name of the post's author
 '''
 import logging
 
@@ -11,22 +11,32 @@ from urllib.parse import urlparse
 
 from harvest.utils import get_xpath_expression
 
+USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
+
+
+def get_user_name(name, base_url):
+    '''
+    returns
+    -------
+    A standardized representation of the user's URL.
+    '''
+    return ".".join(name.split()) + '@' + urlparse(base_url).netloc
+
+
 
 # strategy
 # --------
 # * consider decendndants as well as elements at the same level
 # * the number of URL candidates must be identical to the number of posts ;)
+# * assign points for URLs that contain 'user', 'member', 'person', 'profile', etc.
 
-def get_link(dom, post_xpath, base_url, forum_posts):
+def get_link(dom, post_xpath, base_url):
     '''
     Obtains the URL to the given post.
     '''
     url_candidates = defaultdict(lambda: {'elements': [],
                                           'is_forum_path': True,
                                           'is_same_resource': True})
-
-    # post elements contains less elements than forum_posts (!)
-    # since it takes the container with the posts
     post_elements = dom.xpath(post_xpath + "/..")
 
     # collect candidate paths
@@ -34,17 +44,11 @@ def get_link(dom, post_xpath, base_url, forum_posts):
         for tag in element.iterdescendants():
             if tag.tag == 'a':
                 xpath = get_xpath_expression(tag)
-                # anchor tags with the name attribute will
-                # lead to the post
-                if 'name' in (attr.lower() for attr in tag.attrib):
-                    logging.info("Computed URL xpath for forum %s.", base_url)
-                    return xpath
-
                 url_candidates[xpath]['elements'].append(tag)
 
     # filter candidate paths
     for xpath, matches in list(url_candidates.items()):
-        if len(matches['elements']) != len(forum_posts):
+        if len(matches['elements']) != len(post_elements):
             del url_candidates[xpath]
 
     # filter candidates that contain URLs to other domains and
@@ -78,3 +82,7 @@ def get_link(dom, post_xpath, base_url, forum_posts):
         return xpath
 
     return None
+
+
+def test_get_user_name():
+    assert get_user_name('Therese Kurz', 'http://www.heise.de/security') == 'Therese.Kurz@www.heise.de'

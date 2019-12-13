@@ -242,12 +242,13 @@ def extract_posts(forum):
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
 
     # get the post URL
-    url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'])
+    url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'], forum_posts)
     if url_xpath_pattern:
         result['url_xpath_pattern'] = url_xpath_pattern
     # get the post Date
-    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'])
+    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'], forum_posts)
     if date_xpath_pattern:
         result['date_xpath_pattern'] = date_xpath_pattern
+        print("DATE:::", forum['url'], "-->", date_xpath_pattern)
     return result
 
