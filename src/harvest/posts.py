@@ -28,7 +28,7 @@
 # - from the best match that yields multiple results (i.e. forum posts) select node parent elements as long as we still get the same number of results
 # - constraints
 #   - blocked tags are not allowed to appear down- or upstream of the selected path (e.g. it is not possible that a forum post contains a 'form' or 'input' element :)
-#   - there are forums that are contained in a form tag .... 
+#   - there are forums that are contained in a form tag ....
 #   - changed algorithm:
 #     - do not let additional BLACKLIST_TAGS be entered
 #     - strongly discount paths that contain BLACKLIST_TAGS
@@ -36,7 +36,7 @@
 # open issues
 # -----------
 # * mumsnet -> does not detect first post (//div[@class="talk-post  message"]/p/../.."]) rather than //div[@class="post "])
-# * amsel.de -> only get's every second post (//td[@class="forum_message bg_7"]/..) due to different coloring ... 
+# * amsel.de -> only get's every second post (//td[@class="forum_message bg_7"]/..) due to different coloring ...
 # * www.msconnection.org, shift.ms -> works well, but does not get the title of the first post
 
 # determine post URL
@@ -49,7 +49,7 @@
 # -------------
 # * remove repeated elements
 # * appear at the beginning or end of a post
-# * may contain information on 
+# * may contain information on
 #   - user
 #   - date (subscription versus post date) => always compare dates within a page for computing the date extraction rule
 #   - replies, likes, etc.
@@ -58,23 +58,20 @@
 # -----------
 # * remove posts that exceed a certain length and URL threshold (spam) - compare: http://blog.angelman-asa.org (liuchunkai)
 
-
-from lxml import etree
-from sys import exit
 from itertools import chain
 
 from harvest.cleanup.forum_post import remove_boilerplate
-from harvest.utils import get_xpath_expression, extract_text
+from harvest.utils import (get_xpath_expression, extract_text, get_html_dom,
+                           get_xpath_tree_text)
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
+from lxml import etree
 import logging
-import re
 import numpy as np
 
-RE_FILTER_XML_HEADER = re.compile("<\?xml version=\".*? encoding=.*?\?>")
 #CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
 CORPUS = "./data/forum/"
 
@@ -100,15 +97,6 @@ def text_to_vsm(text):
         index = word.__hash__() % VSM_MODEL_SIZE
         vms[index] += 1
     return vms
-
-
-def get_xpath_tree_text(dom, xpath):
-    '''
-    returns
-    -------
-    a list of text obtained by all elements matching the given xpath
-    '''
-    return [extract_text(element) for element in dom.xpath(xpath)]
 
 
 def get_matching_element(comment, dom):
@@ -157,7 +145,7 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
     '''
     returns
     -------
-    a metric that is based on 
+    a metric that is based on
       (i) the vector space model and
      (ii) the number of returned elements
     (iii) whether the descendants contain any blacklisted tags
@@ -177,7 +165,7 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
         logging.warning("Cannot compute simularity - empty reference (%s) or xpath (%ss) text.", reference_content, ' '.join(xpath_content_list))
         return 0., 1
     similarity = np.dot(reference_vsm, xpath_vsm)/divisor
-    
+
     # discount any node that contains BLACKLIST_TAGS
     if ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
         similarity /= 10
@@ -185,14 +173,13 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
 
 
 def extract_posts(forum):
-    html = RE_FILTER_XML_HEADER.sub("", forum['html'])
-    dom = etree.HTML(html)
+    dom = get_html_dom(forum['html'])
     tree = etree.ElementTree(dom)
     content_comments = extract_comments(forum['html']).strip()
 
     comments = []
     # remove blacklisted items and use inscriptis if dragnet has failed
-    content_comments = get_text(html)
+    content_comments = get_text(forum['html'])
     for comment in [c for c in (content_comments.split("\n") if content_comments else get_text(html).split()) if c.strip()]:
         if not comment.strip():
             continue
@@ -239,7 +226,7 @@ def extract_posts(forum):
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
 
-    result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments}
+    result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments, 'url_xpath_pattern': None, 'date_xpath_pattern': None}
 
     # get the post URL
     url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'], forum_posts)

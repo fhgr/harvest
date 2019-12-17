@@ -7,8 +7,10 @@ import os
 
 from glob import glob
 from json import load, dump
+from csv import writer
 from collections import defaultdict
 from harvest import posts
+from harvest.extract import extract_posts
 from urllib.parse import urlparse
 
 logging.getLogger().setLevel(logging.INFO)
@@ -16,6 +18,7 @@ logging.getLogger().setLevel(logging.INFO)
 parser = argparse.ArgumentParser(description='Forum harvester - extracts and harvests posts + metadata from Web forums')
 parser.add_argument('corpus_path', metavar='corpus_path', help='Path to the input corpus')
 parser.add_argument('output_file', metavar='output_file', help='Output file for the parser\'s results.')
+parser.add_argument('--result-directory', dest='result_directory', help='Optional directory for storing CSV results.')
 parser.add_argument('--debug-directory', dest='debug_directory', help='Optional directory for debug information.')
 parser.add_argument('--corpus-include-string', dest='corpus_include_string', help='Optionally restrict the input corpus to URLs that match the corpus include string.')
 
@@ -39,6 +42,19 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
         logging.info("Processing " + forum['url'])
         post = posts.extract_posts(forum)
         result[domain].append(post)
+
+        if args.result_directory:
+            result_fname = os.path.join(args.result_directory, f'{domain}.csv')
+            with open(result_fname, 'w') as g:
+                csvwriter = writer(g)
+                csvwriter.writerow(['user', 'date', 'url', 'post'])
+                for post in extract_posts(forum['html'], forum['url'],
+                                            post['xpath_pattern'],
+                                            post['url_xpath_pattern'],
+                                            post['date_xpath_pattern'],
+                                            None):
+                    csvwriter.writerow(['', post.date, post.url,
+                                        post.post])
 
 with open(args.output_file, "w") as f:
     dump(result, f, indent=True)

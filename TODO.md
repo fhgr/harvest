@@ -1,5 +1,8 @@
 # Open issues
 
+Strategie: Date and User usually appear in the post text.
+
+
 ## post extraction
 - detect lead posts (compare: mumsnet.com)
 

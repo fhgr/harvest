@@ -10,18 +10,10 @@ from collections import defaultdict
 from datetime import datetime
 from dateparser.search import search_dates
 
-from harvest.utils import get_xpath_expression
+from harvest.utils import get_xpath_expression, get_cleaned_element_text
 
 MAX_DATE_LEN = 32
 LANGUAGES = ('en', 'de', 'es')
-
-def _get_cleaned_element_text(element):
-    '''
-    Returns:
-        str: the text of the given element (without its children
-    '''
-    return ((element.text or "") + (element.tail or "")).replace(",", " ").replace(";", " ").strip()
-
 
 # strategy
 # --------
@@ -29,7 +21,7 @@ def _get_cleaned_element_text(element):
 #   - extract the one which contains most likely the date (otherwise no date-xpath is returned)
 
 # * extract all dates from the date-xpath
-# * select the one that 
+# * select the one that
 #   - uses the same format and
 #   - are newer (!= join date)
 
@@ -54,7 +46,7 @@ def get_date(dom, post_xpath, base_url, forum_posts):
     # collect candidate paths
     for element in post_elements:
         for tag in element.iterdescendants():
-            text = _get_cleaned_element_text(tag)
+            text = get_cleaned_element_text(tag)
             # do not consider text larger than MAX_DATE_LEN relevant for date extraction
             if len(text) > MAX_DATE_LEN or not search_dates(text, languages=LANGUAGES):
                 continue
@@ -76,7 +68,7 @@ def get_date(dom, post_xpath, base_url, forum_posts):
     for xpath, matches in list(date_candidates.items()):
         for match in matches['elements']:
             logging.info("Match attribs: %s of type %s.", match, type(match))
-            extracted_dates = search_dates(_get_cleaned_element_text(match), languages=LANGUAGES)
+            extracted_dates = search_dates(get_cleaned_element_text(match), languages=LANGUAGES)
 
             if not extracted_dates:
                 del date_candidates[xpath]
