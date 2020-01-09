@@ -114,6 +114,11 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
         if post_url_xpath else generate_forum_url(url, len(forum_posts))
     forum_dates = get_forum_date(dom, post_date_xpath) \
         if post_date_xpath else len(forum_posts) * ['']
+    forum_users = get_forum_url(dom, url, post_user_xpath) \
+        if post_user_xpath else len(forum_posts) * ['']
 
-    return [ExtractionResult(post, url, date, '')
-            for post, url, date in zip(forum_posts, forum_urls, forum_dates)]
+    print("****", forum_users)
+
+    return [ExtractionResult(post, url, date, user)
+            for post, url, date, user in zip(forum_posts, forum_urls,
+                                             forum_dates, forum_users)]

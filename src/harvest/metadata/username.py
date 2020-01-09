@@ -64,11 +64,9 @@ def get_user(dom, post_xpath, base_url, posts):
         current_url_path = ''
         for match in matches['elements']:
             logging.info("Match attribs: %s of type %s.", match, type(match))
-            logging.info(match.tag + ">" + str(match.attrib))
             parsed_url = urlparse(urljoin(base_url,
                                           match.attrib.get('href', '')))
             if parsed_url.netloc != forum_url.netloc:
-                print("DDEL", parsed_url.netloc,">F", forum_url.netloc)
                 del url_candidates[xpath]
                 break
 
