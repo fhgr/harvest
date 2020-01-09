@@ -7,7 +7,7 @@ Tries to obtain the URL of the given post
 import logging
 
 from collections import defaultdict
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from harvest.utils import get_xpath_expression
 
@@ -54,7 +54,8 @@ def get_link(dom, post_xpath, base_url, forum_posts):
         current_url_path = ''
         for match in matches['elements']:
             logging.info("Match attribs: %s of type %s.", match, type(match))
-            parsed_url = urlparse(match.attrib.get('href', ''))
+            parsed_url = urlparse(urljoin(base_url,
+                                          match.attrib.get('href', '')))
             if parsed_url.netloc != forum_url.netloc:
                 del url_candidates[xpath]
                 break

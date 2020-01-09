@@ -69,13 +69,12 @@ def get_xpath_tree_text(dom, xpath):
     '''
     return [extract_text(element) for element in dom.xpath(xpath)]
 
+
 def get_cleaned_element_text(element):
     '''
     Returns:
         str -- the text of the given element (without its children and
         punctuation).
     '''
-    return f'{element.text or ""} {element.tail or ""}'.replace(",", " ").replace(";", " ").strip()
-
-
-
+    return f'{element.text or ""} {element.tail or ""}'.replace(",", " ") \
+        .replace(";", " ").strip()

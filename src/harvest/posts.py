@@ -24,10 +24,15 @@
 # algorithm
 # =========
 # - match text to xpath nodes
-# - extract the text based on the xpath nodes and determine the best match based on the node + its children
-# - from the best match that yields multiple results (i.e. forum posts) select node parent elements as long as we still get the same number of results
+# - extract the text based on the xpath nodes and determine the best match
+#   based on the node + its children
+# - from the best match that yields multiple results (i.e. forum posts)
+#   select node parent elements as long as we still get the same number of
+#   results.
 # - constraints
-#   - blocked tags are not allowed to appear down- or upstream of the selected path (e.g. it is not possible that a forum post contains a 'form' or 'input' element :)
+#   - blocked tags are not allowed to appear down- or upstream of the selected
+#     path (e.g. it is not possible that a forum post contains a 'form' or
+#     'input' element :)
 #   - there are forums that are contained in a form tag ....
 #   - changed algorithm:
 #     - do not let additional BLACKLIST_TAGS be entered
@@ -65,6 +70,7 @@ from harvest.utils import (get_xpath_expression, extract_text, get_html_dom,
                            get_xpath_tree_text)
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
+from harvest.metadata.username import get_user
 from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
@@ -180,7 +186,8 @@ def extract_posts(forum):
     comments = []
     # remove blacklisted items and use inscriptis if dragnet has failed
     content_comments = get_text(forum['html'])
-    for comment in [c for c in (content_comments.split("\n") if content_comments else get_text(html).split()) if c.strip()]:
+    for comment in [c for c in (content_comments.split("\n")
+        if content_comments else get_text(html).split()) if c.strip()]:
         if not comment.strip():
             continue
         elif not 'copyright' in comment.lower():
@@ -228,14 +235,20 @@ def extract_posts(forum):
 
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern, 'xpath_score': xpath_score, 'forum_posts': forum_posts, 'dragnet': content_comments, 'url_xpath_pattern': None, 'date_xpath_pattern': None}
 
-    # get the post URL
+    # add the post URL
     url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'], forum_posts)
     if url_xpath_pattern:
         result['url_xpath_pattern'] = url_xpath_pattern
-    # get the post Date
-    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'], forum_posts)
+
+    # add the post Date
+    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'],
+                                  forum_posts)
     if date_xpath_pattern:
         result['date_xpath_pattern'] = date_xpath_pattern
-        print("DATE:::", forum['url'], "-->", date_xpath_pattern)
-    return result
 
+    # add the post user
+    user_xpath_pattern = get_user(dom, xpath_pattern, forum['url'], forum_posts)
+    if user_xpath_pattern:
+        result['user_xpath_pattern'] = user_xpath_pattern
+    print(">>>", user_xpath_pattern)
+    return result

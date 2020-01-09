@@ -7,7 +7,7 @@ Tries to obtain the name of the post's author
 import logging
 
 from collections import defaultdict
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from harvest.utils import get_xpath_expression
 
@@ -22,17 +22,23 @@ def get_user_name(name, base_url):
     '''
     return ".".join(name.split()) + '@' + urlparse(base_url).netloc
 
-
-
 # strategy
 # --------
 # * consider decendndants as well as elements at the same level
 # * the number of URL candidates must be identical to the number of posts ;)
-# * assign points for URLs that contain 'user', 'member', 'person', 'profile', etc.
+# * assign points for URLs that contain 'user', 'member', 'person', 'profile',
+#   etc.
 
-def get_link(dom, post_xpath, base_url):
+
+def get_user(dom, post_xpath, base_url, posts):
     '''
     Obtains the URL to the given post.
+
+    Args:
+        - dom: the forums DOM object
+        - post_xpath: the determined post xpath
+        - base url: URL of the given forum
+        - posts: the extracted posts
     '''
     url_candidates = defaultdict(lambda: {'elements': [],
                                           'is_forum_path': True,
@@ -42,13 +48,13 @@ def get_link(dom, post_xpath, base_url):
     # collect candidate paths
     for element in post_elements:
         for tag in element.iterdescendants():
-            if tag.tag == 'a':
+            if tag.tag == 'a' and 'href' in tag.attrib:
                 xpath = get_xpath_expression(tag)
                 url_candidates[xpath]['elements'].append(tag)
 
     # filter candidate paths
     for xpath, matches in list(url_candidates.items()):
-        if len(matches['elements']) != len(post_elements):
+        if len(matches['elements']) != len(posts):
             del url_candidates[xpath]
 
     # filter candidates that contain URLs to other domains and
@@ -58,8 +64,11 @@ def get_link(dom, post_xpath, base_url):
         current_url_path = ''
         for match in matches['elements']:
             logging.info("Match attribs: %s of type %s.", match, type(match))
-            parsed_url = urlparse(match.attrib.get('href', ''))
+            logging.info(match.tag + ">" + str(match.attrib))
+            parsed_url = urlparse(urljoin(base_url,
+                                          match.attrib.get('href', '')))
             if parsed_url.netloc != forum_url.netloc:
+                print("DDEL", parsed_url.netloc,">F", forum_url.netloc)
                 del url_candidates[xpath]
                 break
 
@@ -82,7 +91,6 @@ def get_link(dom, post_xpath, base_url):
         return xpath
 
     return None
-
 
 def test_get_user_name():
     assert get_user_name('Therese Kurz', 'http://www.heise.de/security') == 'Therese.Kurz@www.heise.de'
