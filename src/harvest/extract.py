@@ -37,10 +37,10 @@ def _get_reference_url(url, element):
       is pointing to (href)
     '''
     if 'name' in element.attrib:
-        return urljoin(url, "#{element.attrib['name']}")
+        return urljoin(url, f"#{element.attrib['name']}")
 
     if 'href' in element.attrib:
-        return urljoin(url, "{element.attrib['href']}")
+        return urljoin(url, f"{element.attrib['href']}")
 
     return None
 
