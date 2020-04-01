@@ -82,6 +82,9 @@ def get_user(dom, post_xpath, base_url, posts):
     # obtain the most likely url path
     logging.info("%d rather than one URL candidate remaining. "
                  "Sorting candidates.", len(url_candidates))
+
+    from pprint import pprint
+    pprint(url_candidates)
     for xpath, _ in sorted(url_candidates.items(),
                            key=lambda x: (x[1]['is_forum_path'], x[1]['is_same_resource']),
                            reverse=True):
