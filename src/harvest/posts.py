@@ -78,7 +78,7 @@ from lxml import etree
 import logging
 import numpy as np
 
-#CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
+# CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
 CORPUS = "./data/forum/"
 
 # number of characters required for a match
@@ -90,6 +90,7 @@ BLACKLIST_TAGS = ('option', 'footer', 'form', 'aside', 'head', 'tfoot')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
+
 
 def text_to_vsm(text):
     '''
@@ -134,6 +135,7 @@ def decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
             return True
     return False
 
+
 def ancestors_contains_blacklisted_tag(xpath_string, blacklisted_tags):
     '''
     returns
@@ -168,9 +170,10 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
 
     divisor = (np.linalg.norm(reference_vsm) * np.linalg.norm(xpath_vsm))
     if not divisor:
-        logging.warning("Cannot compute simularity - empty reference (%s) or xpath (%ss) text.", reference_content, ' '.join(xpath_content_list))
+        logging.warning("Cannot compute similarity - empty reference (%s) or xpath (%ss) text.", reference_content,
+                        ' '.join(xpath_content_list))
         return 0., 1
-    similarity = np.dot(reference_vsm, xpath_vsm)/divisor
+    similarity = np.dot(reference_vsm, xpath_vsm) / divisor
 
     # discount any node that contains BLACKLIST_TAGS
     if ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
@@ -181,13 +184,13 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
 def extract_posts(forum):
     dom = get_html_dom(forum['html'])
     tree = etree.ElementTree(dom)
-    content_comments = extract_comments(forum['html']).strip()
+    # content_comments = extract_comments(forum['html']).strip()
 
     comments = []
     # remove blacklisted items and use inscriptis if dragnet has failed
     content_comments = get_text(forum['html'])
     for comment in [c for c in (content_comments.split("\n")
-        if content_comments else get_text(html).split()) if c.strip()]:
+    if content_comments else get_text(html).split()) if c.strip()]:
         if not comment.strip():
             continue
         elif not 'copyright' in comment.lower():
@@ -206,7 +209,8 @@ def extract_posts(forum):
         element = get_matching_element(comment, dom)
         xpath_pattern = get_xpath_expression(element)
 
-        xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom, xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
+        xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
+                                                       xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
         if xpath_element_count > 1:
             candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
@@ -214,21 +218,22 @@ def extract_posts(forum):
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
         return {'url': forum['url'], 'dragnet': content_comments}
 
-
     # obtain anchor node
     candidate_xpaths.sort()
     xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
 
     while True:
         new_xpath_pattern = xpath_pattern + "/.."
-        new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom, xpath=new_xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
-        if new_xpath_element_count < MIN_POST_COUNT:
+        new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom,
+                                                               xpath=new_xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
+        if new_xpath_element_count < MIN_POST_COUNT:  #
             break
 
         xpath_pattern = new_xpath_pattern
         xpath_score = new_xpath_score
 
-    logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern, xpath_score)
+    logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern,
+                 xpath_score)
     if xpath_pattern:
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
