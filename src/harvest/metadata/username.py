@@ -15,6 +15,9 @@ from harvest.utils import get_xpath_expression
 
 USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
 
+SCORE_INCREMENT = 1
+SCORE_TEXT_CHANCE_INCREMENT = 3
+
 
 def get_user_name(name, base_url):
     '''
@@ -50,23 +53,35 @@ def _merge_same_classes(url_candidates):
                 if new_x_path == new_x_path_to_compare:
                     _append_merged_url_candidates(url_candidates, new_x_path, matches)
                     _append_merged_url_candidates(url_candidates, new_x_path, matchesToCompare)
-                    url_candidates[new_x_path]['is_merged'] = True
+
+
+def _set_user_hint_exits_for_attribute(matches, attribute_value):
+    for user_hint in USER_PAGE_HINTS:
+        if re.search(user_hint, attribute_value, re.IGNORECASE):
+            matches['score'] += SCORE_INCREMENT
+            return True
 
 
 def _set_user_hint_exits(url_candidates):
     for xpath, matches in list(url_candidates.items()):
-        for user_hint in USER_PAGE_HINTS:
-            if re.search(user_hint, xpath, re.IGNORECASE):
-                matches['contains_user_hint_class'] = True
-                break
+        _set_user_hint_exits_for_attribute(matches, xpath)
         for match in [m.get('href') for m in matches['elements']]:
-            for user_hint in USER_PAGE_HINTS:
-                if re.search(user_hint, match.lower(), re.IGNORECASE):
-                    matches['contains_user_hint_href'] = True
-                    break
-            if matches['contains_user_hint_href']:
+            if _set_user_hint_exits_for_attribute(matches, match.lower()):
                 break
 
+
+def _set_text_changes(url_candidates):
+    for xpath, matches in list(url_candidates.items()):
+        if len(np.unique([e.text for e in matches['elements'] if e.text])) > 1:
+            matches['score'] += SCORE_TEXT_CHANCE_INCREMENT
+        else:
+            text_in_sub_elements = []
+            for tag in [e for e in matches['elements']]:
+                for subTag in tag.iterdescendants('span', 'div', 'b', 'strong'):
+                    if subTag.text and subTag.text not in text_in_sub_elements:
+                        text_in_sub_elements.append(subTag.text)
+            if len(text_in_sub_elements) > 1:
+                matches['score'] += SCORE_TEXT_CHANCE_INCREMENT
 
 # strategy
 # --------
@@ -77,7 +92,7 @@ def _set_user_hint_exits(url_candidates):
 
 
 def get_user(dom, post_xpath, base_url, posts):
-    '''
+    """
     Obtains the URL to the given post.
 
     Args:
@@ -85,14 +100,8 @@ def get_user(dom, post_xpath, base_url, posts):
         - post_xpath: the determined post xpath
         - base url: URL of the given forum
         - posts: the extracted posts
-    '''
-    url_candidates = defaultdict(lambda: {'elements': [],
-                                          'is_not_forum_path': True,
-                                          'is_same_resource': True,
-                                          'is_merged': False,
-                                          'contains_user_hint_class': False,
-                                          'contains_user_hint_href': False,
-                                          'text_changes': False})
+    """
+    url_candidates = defaultdict(lambda: {'elements': [], 'score': 0})
     post_elements = dom.xpath(post_xpath + "/..")
 
     # collect candidate paths
@@ -111,42 +120,25 @@ def get_user(dom, post_xpath, base_url, posts):
 
     _set_user_hint_exits(url_candidates)
 
-    # Check if the text of the link changes
-    for xpath, matches in list(url_candidates.items()):
-        if len(np.unique([e.text for e in matches['elements'] if e.text])) > 1:
-            matches['text_changes'] = True
+    _set_text_changes(url_candidates)
 
     # filter candidates that contain URLs to other domains and
     # record the urls' targets
     forum_url = urlparse(base_url)
     for xpath, matches in list(url_candidates.items()):
-        current_url_path = ''
         for match in matches['elements']:
             logging.info("Match attribs: %s of type %s.", match, type(match))
-            parsed_url = urlparse(urljoin(base_url,
-                                          match.attrib.get('href', '')))
-            if parsed_url.netloc != forum_url.netloc:
+            parsed_url = urlparse(urljoin(base_url, match.attrib.get('href', '')))
+            if parsed_url.netloc != forum_url.netloc or parsed_url.path == forum_url.path:
                 del url_candidates[xpath]
                 break
-
-            if not current_url_path:
-                current_url_path = parsed_url.path
-
-            if parsed_url.path == forum_url.path:
-                url_candidates[xpath]['is_not_forum_path'] = False
-
-            if parsed_url.path != current_url_path:
-                url_candidates[xpath]['is_same_resource'] = False
 
     # obtain the most likely url path
     logging.info("%d rather than one URL candidate remaining. "
                  "Sorting candidates.", len(url_candidates))
 
     for xpath, _ in sorted(url_candidates.items(),
-                           key=lambda x: (
-                                   x[1]['is_not_forum_path'], x[1]['is_same_resource'], x[1]['text_changes'],
-                                   x[1]['contains_user_hint_href'], x[1]['contains_user_hint_class'],
-                                   x[1]['is_merged']), reverse=True):
+                           key=lambda x: (x[1]['score']), reverse=True):
         logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath
 
