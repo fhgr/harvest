@@ -5,7 +5,7 @@ Functions that are shared across modules.
 import re
 from lxml import etree
 
-VALID_NODE_TYPE_QUALIFIERS = ('class', )
+VALID_NODE_TYPE_QUALIFIERS = ('class',)
 RE_FILTER_XML_HEADER = re.compile("<\\?xml version=\".*? encoding=.*?\\?>")
 
 
@@ -27,6 +27,22 @@ def extract_text(element):
       str -- The text for the given element.
     '''
     return ' '.join([t.strip() for t in element.itertext() if t.strip()])
+
+
+def get_xpath_expression_child_filter(element):
+    """
+    Returns:
+        str -- The xpath expression to filter because of child element
+    """
+    child_filter = ""
+    children = element.getchildren()
+    if len(children) == 1:
+        child_filter = "[" + children[0].tag + "]"
+    elif element.text and element.text.strip() and not children:
+        child_filter = "[not(*) and string-length(text()) > 0]"
+    elif not element.text and not children:
+        child_filter = "[not(*) and string-length(text()) = 0]"
+    return child_filter
 
 
 def get_xpath_expression(element):
