@@ -11,7 +11,7 @@ import numpy as np
 from collections import defaultdict
 from urllib.parse import urlparse, urljoin
 
-from harvest.utils import get_xpath_expression
+from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter
 
 USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
 
@@ -83,10 +83,12 @@ def _set_text_changes(url_candidates):
             if len(text_in_sub_elements) > 1:
                 matches['score'] += SCORE_TEXT_CHANCE_INCREMENT
 
+
 # strategy
 # --------
 # * consider decendndants as well as elements at the same level
-# * the number of URL candidates must be identical to the number of posts ;)
+# * the number of URL candidates must be identical to the number of posts or
+#   or must not have less than two elements than the posts
 # * assign points for URLs that contain 'user', 'member', 'person', 'profile',
 #   etc.
 
@@ -109,13 +111,14 @@ def get_user(dom, post_xpath, base_url, posts):
         for tag in element.iterdescendants():
             if tag.tag == 'a' and 'href' in tag.attrib:
                 xpath = get_xpath_expression(tag)
+                xpath += get_xpath_expression_child_filter(tag)
                 url_candidates[xpath]['elements'].append(tag)
 
     _merge_same_classes(url_candidates)
 
     # filter candidate paths
     for xpath, matches in list(url_candidates.items()):
-        if len(matches['elements']) != len(posts):
+        if len(matches['elements']) > len(posts) or len(matches['elements']) < len(posts) - 2:
             del url_candidates[xpath]
 
     _set_user_hint_exits(url_candidates)
@@ -129,7 +132,7 @@ def get_user(dom, post_xpath, base_url, posts):
         for match in matches['elements']:
             logging.info("Match attribs: %s of type %s.", match, type(match))
             parsed_url = urlparse(urljoin(base_url, match.attrib.get('href', '')))
-            if parsed_url.netloc != forum_url.netloc or parsed_url.path == forum_url.path:
+            if parsed_url.netloc and parsed_url.netloc != forum_url.netloc or parsed_url.path == forum_url.path:
                 del url_candidates[xpath]
                 break
 
