@@ -142,7 +142,7 @@ def test_extract_posts_forum_medschat(load_test_data):
     assert post['xpath_pattern'] == '//span[@class="search_results"]/../..'
     assert post['url_xpath_pattern'] == '//a[@class="action_bar_blue"]'
     assert post['date_xpath_pattern'] == '//span[@class="search_results"]/../..//span[@class="small soft"]/time'
-    assert post['user_xpath_pattern'] == '//a[@class="soft uline"][not(*) and string-length(text()) > 0]'
+    assert 'user_xpath_pattern' not in post  # Todo extract user with no link
 
 
 def test_extract_posts_forum_msconnection(load_test_data):

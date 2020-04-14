@@ -14,6 +14,7 @@ from urllib.parse import urlparse, urljoin
 from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter
 
 USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
+FORBIDDEN_TERMS = ('terms of use', 'privacy policy', 'reply', 'answer', 'share', 'report')
 
 SCORE_INCREMENT = 1
 SCORE_TEXT_CHANCE_INCREMENT = 3
@@ -85,10 +86,18 @@ def _set_text_changes(url_candidates):
                 matches['score'] += SCORE_TEXT_CHANCE_INCREMENT
 
 
+def _remove_items_with_forbidden_words(url_candidates):
+    for xpath, matches in list(url_candidates.items()):
+        for tag in matches['elements']:
+            if tag.text and tag.text.lower() in FORBIDDEN_TERMS:
+                del url_candidates[xpath]
+                break
+
+
 # strategy
 # --------
 # * consider decendndants as well as elements at the same level
-# * the number of URL candidates must be identical to the number of posts or
+# * the number of URL candidates must be identical to the number of posts
 #   or must not have less than two elements than the posts
 # * assign points for URLs that contain 'user', 'member', 'person', 'profile',
 #   etc.
@@ -121,6 +130,8 @@ def get_user(dom, post_xpath, base_url, posts):
     for xpath, matches in list(url_candidates.items()):
         if len(matches['elements']) > len(posts) or len(matches['elements']) < len(posts) - 2:
             del url_candidates[xpath]
+
+    _remove_items_with_forbidden_words(url_candidates)
 
     _set_user_hint_exits(url_candidates)
 
