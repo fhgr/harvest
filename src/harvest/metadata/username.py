@@ -30,6 +30,7 @@ def get_user_name(name, base_url):
 
 def _get_regex_for_merged_classes(same_classes, xpath):
     same_classes_with_contains = ["contains(@class, \'" + x + "\')" for x in same_classes]
+    same_classes_with_contains.sort()
     return re.sub(r"\/\/a\[@class=\"[\d\w\s]*\"\]", "//a[" + " and ".join(same_classes_with_contains) + "]", xpath)
 
 
