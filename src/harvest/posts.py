@@ -189,11 +189,10 @@ def extract_posts(forum):
     comments = []
     # remove blacklisted items and use inscriptis if dragnet has failed
     content_comments = get_text(forum['html'])
-    for comment in [c for c in (content_comments.split("\n")
-    if content_comments else get_text(html).split()) if c.strip()]:
+    for comment in [c for c in content_comments.split("\n") if c.strip()]:
         if not comment.strip():
             continue
-        elif not 'copyright' in comment.lower():
+        elif 'copyright' not in comment.lower():
             comments.append(comment.strip())
         else:
             break
