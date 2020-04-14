@@ -146,7 +146,3 @@ def get_user(dom, post_xpath, base_url, posts):
         return xpath
 
     return None
-
-
-def test_get_user_name():
-    assert get_user_name('Therese Kurz', 'http://www.heise.de/security') == 'Therese.Kurz@www.heise.de'
