@@ -14,7 +14,7 @@ from urllib.parse import urlparse, urljoin
 from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter
 
 USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
-FORBIDDEN_TERMS = ('terms of use', 'privacy policy', 'reply', 'answer', 'share', 'report')
+FORBIDDEN_TERMS = ('terms of use', 'privacy policy', 'add message', 'reply', 'answer', 'share', 'report')
 
 SCORE_INCREMENT = 1
 SCORE_TEXT_CHANCE_INCREMENT = 3

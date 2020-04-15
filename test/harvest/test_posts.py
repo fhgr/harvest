@@ -189,8 +189,7 @@ def test_extract_posts_forum_mumsnet(load_test_data):
     assert post['url_xpath_pattern'] == '//a[@class="add_message"]' # Wrong url. No url exists for this page
     assert post['date_xpath_pattern'] == \
            '//div[contains(@class, \'talk-post\') and contains(@class, \'message\')]/p/../..//span[@class="post_time"]'
-    assert post['user_xpath_pattern'] == \
-           '//a[@class="add_message"][not(*) and string-length(text()) > 0]' # Wrong user selected
+    assert 'user_xpath_pattern' not in post  # Todo extract user with no link
 
 
 def test_extract_posts_forum_uninterrupted(load_test_data):
