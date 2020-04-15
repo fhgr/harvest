@@ -33,10 +33,11 @@ def test_extract_posts_forum_community_scope(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://community.scope.org.uk/discussion/57774/copd'
-    assert post['xpath_pattern'] == '//div[@class="Message userContent"]/../../../..'
+    assert post['xpath_pattern'] == \
+           '//div[contains(@class, \'Message\') and contains(@class, \'userContent\')]/../../../..'
     assert post['url_xpath_pattern'] == '//a[@class="Permalink"]'
     assert post['date_xpath_pattern'] == \
-           '//div[@class="Message userContent"]/../../../..//a[@class="Permalink"]/time'
+           '//div[contains(@class, \'Message\') and contains(@class, \'userContent\')]/../../../..//a[@class="Permalink"]/time'
     assert post['user_xpath_pattern'] == \
            '//a[@class="Username"][not(*) and string-length(text()) > 0]'
 
@@ -54,16 +55,17 @@ def test_extract_posts_forum_maladiesraresinfo(load_test_data):
            '//dl[@class="postprofile"]/dt/a[not(*) and string-length(text()) > 0]'
 
 
-def test_extract_posts_forum_maladiesraresinfo(load_test_data):
+def test_extract_posts_forum_healthunlocked(load_test_data):
     forum_test_data = load_test_data(
         "https%3A%2F%2Fhealthunlocked.com%2Fparkinsonsmovement%2Fposts%2F142058845%2Fartane-anyone.json.gz")
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://healthunlocked.com/parkinsonsmovement/posts/142058845/artane-anyone'
-    assert post['xpath_pattern'] == '//div[@class="response-text-content text-content"]/span/p/../../..'
+    assert post['xpath_pattern'] == \
+           '//div[contains(@class, \'response-text-content\') and contains(@class, \'text-content\')]/span/p/../../..'
     assert post['url_xpath_pattern'] == '//div[@class="post-media-info__action"]/a'
     assert post['date_xpath_pattern'] == \
-           '//div[@class="response-text-content text-content"]/span/p/../../..//time[@class=""]'
+           '//div[contains(@class, \'response-text-content\') and contains(@class, \'text-content\')]/span/p/../../..//time[@class=""]'
     assert post['user_xpath_pattern'] == \
            '//div[@class="response-header__author-content"]/a[not(*) and string-length(text()) > 0]'
 
@@ -99,9 +101,10 @@ def test_extract_posts_forum_amsel(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://www.amsel.de/multiple-sklerose-forum/?tnr=1&mnr=217239&archiv_flag=2&fv=1'
-    assert post['xpath_pattern'] == '//td[@class="forum_message bg_7"]/..'
+    assert post['xpath_pattern'] == '//td[contains(@class, \'forum_message\') and contains(@class, \'bg_7\')]/..'
     assert post['url_xpath_pattern'] == '//td[@class="bg_7 x_textsize_1"]/p/a'
-    assert post['date_xpath_pattern'] == '//td[@class="forum_message bg_7"]/..//td[@class="bg_3 x_textsize_1"]/p'
+    assert post['date_xpath_pattern'] == \
+           '//td[contains(@class, \'forum_message\') and contains(@class, \'bg_7\')]/..//td[@class="bg_3 x_textsize_1"]/p'
     assert post['user_xpath_pattern'] == \
            '//td[@class="bg_7 x_textsize_1"]/p/a[not(*) and string-length(text()) > 0]'
 
@@ -165,12 +168,29 @@ def test_extract_posts_forum_msworld(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://www.msworld.org/forum/showthread.php?145403-Sort-of-new-here'
-    assert post['xpath_pattern'] == '//blockquote[@class="postcontent restore"]/../../../../..'
+    assert post['xpath_pattern'] == \
+           '//blockquote[contains(@class, \'postcontent\') and contains(@class, \'restore\')]/../../../../..'
     assert post['url_xpath_pattern'] == '//a[@class="postcounter"]'
     assert post['date_xpath_pattern'] == \
-           '//blockquote[@class="postcontent restore"]/../../../../..//span[@class="date"]'
+           '//blockquote[contains(@class, \'postcontent\') and contains(@class, \'restore\')]/../../../../..//span[@class="date"]'
     assert post['user_xpath_pattern'] == \
            '//a[contains(@class, \'popupctrl\') and contains(@class, \'username\')][strong]'
+
+
+def test_extract_posts_forum_mumsnet(load_test_data):
+    forum_test_data = load_test_data("https%3A%2F%2Fwww.mumsnet.com%2FTalk%2Fpregnancy%2F3749275-Pregnant-with-a-black"
+                                     "-mixed-race-with-black-baby.json.gz")
+    post = extract_posts(forum_test_data)
+
+    assert post['url'] == \
+           'https://www.mumsnet.com/Talk/pregnancy/3749275-Pregnant-with-a-black-mixed-race-with-black-baby'
+    assert post['xpath_pattern'] == \
+           '//div[contains(@class, \'talk-post\') and contains(@class, \'message\')]/p/../..'
+    assert post['url_xpath_pattern'] == '//a[@class="add_message"]' # Wrong url. No url exists for this page
+    assert post['date_xpath_pattern'] == \
+           '//div[contains(@class, \'talk-post\') and contains(@class, \'message\')]/p/../..//span[@class="post_time"]'
+    assert post['user_xpath_pattern'] == \
+           '//a[@class="add_message"][not(*) and string-length(text()) > 0]' # Wrong user selected
 
 
 def test_extract_posts_forum_uninterrupted(load_test_data):

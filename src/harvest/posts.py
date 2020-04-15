@@ -67,7 +67,7 @@ from itertools import chain
 
 from harvest.cleanup.forum_post import remove_boilerplate
 from harvest.utils import (get_xpath_expression, extract_text, get_html_dom,
-                           get_xpath_tree_text)
+                           get_xpath_tree_text, replace_xpath_last_class_with_and_condition)
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
@@ -234,6 +234,7 @@ def extract_posts(forum):
     logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern,
                  xpath_score)
     if xpath_pattern:
+        xpath_pattern = replace_xpath_last_class_with_and_condition(xpath_pattern)
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
 
