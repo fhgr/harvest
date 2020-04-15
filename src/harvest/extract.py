@@ -15,6 +15,7 @@ from datetime import datetime
 from operator import itemgetter
 from urllib.parse import urljoin
 from dateparser.search import search_dates
+from dateutil import parser
 
 from harvest.utils import (get_html_dom, get_xpath_tree_text,
                            get_cleaned_element_text)
@@ -45,6 +46,15 @@ def _get_reference_url(url, element):
     return None
 
 
+def _get_date_text(time_element):
+    if time_element.tag == 'time' and 'datetime' in time_element.attrib:
+        time = time_element.attrib.get('datetime', '')
+        parsed_time = parser.parse(time, ignoretz=True)
+        return parsed_time.ctime()
+    else:
+        return get_cleaned_element_text(time_element)
+
+
 def get_forum_date(dom, post_date_xpath):
     '''
     Selects the date present in the given post_date_xpath. Future dates are
@@ -59,7 +69,7 @@ def get_forum_date(dom, post_date_xpath):
         list -- A list of dates for every forum post.
     '''
     result = []
-    date_mentions = (get_cleaned_element_text(e)
+    date_mentions = (_get_date_text(e)
                      for e in dom.xpath(post_date_xpath))
     for date_mention in date_mentions:
         found = None

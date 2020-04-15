@@ -127,7 +127,7 @@ def test_extract_posts_forum_medhelp(load_test_data):
     assert post['url'] == 'https://www.medhelp.org/posts/Heart-Disease/Wolfe-Parkinson-White-Syndrome/show/250747'
     assert post['xpath_pattern'] == '//div[@class="resp_body "]/..'
     assert post['url_xpath_pattern'] == '//div[@class="user_avatar"]/a'
-    assert post['date_xpath_pattern'] == None  # Todo extract date
+    assert post['date_xpath_pattern'] == '//div[@class="resp_body "]/..//time[@class="mh_timestamp"]'
     assert post['user_xpath_pattern'] == '//div[@class="username"]/a[span]'
 
 
