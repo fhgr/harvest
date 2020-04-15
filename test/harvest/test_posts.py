@@ -153,7 +153,7 @@ def test_extract_posts_forum_msconnection(load_test_data):
     assert post['url'] == 'https://www.msconnection.org/Discussions/f33/t77364/tp1/How-long-is-too-long-to-wait-' \
                           'for-an-initial-con'
     assert post['xpath_pattern'] == '//div[@class="discussion-post-body"]'
-    assert post['url_xpath_pattern'] == None  # Todo extract url
+    assert post['url_xpath_pattern'] == None
     assert post['date_xpath_pattern'] == \
            '//div[@class="discussion-post-body"]//div[@class="discussion-post-meta-info"]/br'
     assert post['user_xpath_pattern'] == '//a[@class="PostUser"][not(*) and string-length(text()) > 0]'
@@ -180,5 +180,5 @@ def test_extract_posts_forum_uninterrupted(load_test_data):
     assert post['url'] == 'https://www.uninterrupted.org.au/blog-category/my-ms-journey'
     assert post['xpath_pattern'] == '//div[@class="field-content"]/p/../../..'
     assert post['url_xpath_pattern'] == '//span[@class="field-content"]/a'
-    assert post['date_xpath_pattern'] == None  # Todo extract date
+    assert post['date_xpath_pattern'] == None
     assert post['user_xpath_pattern'] == '//a[@class="username"][not(*) and string-length(text()) > 0]'
