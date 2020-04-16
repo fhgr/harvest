@@ -78,7 +78,7 @@ def test_extract_posts_forum_myparkinsons(load_test_data):
     assert post['url'] == 'https://myparkinsons.org/cgi-bin/forum/topic_show.pl?id=5231'
     assert post['xpath_pattern'] == '//html/body/div/center/table/center/table/tr/td/../..'
     assert post['url_xpath_pattern'] == '//html/body/div/center/table/center/a'
-    assert post['date_xpath_pattern'] == None  # Todo detect date
+    assert post['date_xpath_pattern'] == '//html/body/div/center/table/center/table/tr/td/../..//html/body/div/center/table/center/table/tr/td/table/tr/td/b'
     assert post['user_xpath_pattern'] == \
            '//html/body/div/center/table/center/table/tr/td/table/tr/td/a[not(*) and string-length(text()) > 0]'
 
