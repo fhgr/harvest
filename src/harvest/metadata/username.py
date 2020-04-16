@@ -89,7 +89,7 @@ def _set_text_changes(url_candidates):
 def _remove_items_with_forbidden_words(url_candidates):
     for xpath, matches in list(url_candidates.items()):
         for tag in matches['elements']:
-            if tag.text and tag.text.lower() in FORBIDDEN_TERMS:
+            if tag.text and [x for x in FORBIDDEN_TERMS if tag.text.lower() == x]:
                 del url_candidates[xpath]
                 break
 
