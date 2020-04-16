@@ -17,9 +17,10 @@ from urllib.parse import urljoin
 from dateparser.search import search_dates
 from dateutil import parser
 
-from harvest.utils import (get_html_dom, get_xpath_tree_text,
-                           get_cleaned_element_text)
-from harvest.cleanup.forum_post import remove_boilerplate
+from harvest.utils import (get_html_dom, get_xpath_tree_text, get_cleaned_element_text, get_xpath_expression,
+                           get_xpath_expression_child_filter)
+
+from harvest.cleanup.forum_post import remove_boilerplate, remove_first_none_posts
 
 ExtractionResult = namedtuple('ExtractionResult', ('post', 'url', 'date',
                                                    'user'))
@@ -70,7 +71,7 @@ def get_forum_date(dom, post_date_xpath):
     '''
     result = []
     date_mentions = (_get_date_text(e)
-                     for e in dom.xpath(post_date_xpath))
+                     for e in dom.xpath(post_date_xpath) if search_dates(_get_date_text(e)))
     for date_mention in date_mentions:
         found = None
         for _, date in sorted(search_dates(date_mention),
@@ -111,6 +112,32 @@ def generate_forum_url(url, num_posts):
     return [urljoin(url, f'#{no}') for no in range(1, num_posts + 1)]
 
 
+def get_same_number_of_url_as_posts(length_forum_post, forum_urls):
+    result = forum_urls[:]
+    if len(forum_urls) != length_forum_post and len(forum_urls) == 1:
+        for x in range(0, length_forum_post - 1):
+            result.append(forum_urls[0])
+    return result
+
+
+def add_anonymous_user(dom, users, post_xpath, post_user_xpath):
+    posts = dom.xpath(post_xpath)
+    if len(posts) > len(users):
+        for index in range(len(posts)):
+            contains_user = False
+            for tag in posts[index].iterdescendants():
+                if tag.tag == 'a' and 'href' in tag.attrib:
+                    xpath = get_xpath_expression(tag)
+                    xpath += get_xpath_expression_child_filter(tag)
+                    if post_user_xpath == xpath:
+                        contains_user = True
+                        break
+            if not contains_user:
+                users.insert(index, "Anonymous")
+                if len(posts) == len(users):
+                    break
+
+
 def extract_posts(html_content, url, post_xpath, post_url_xpath,
                   post_date_xpath, post_user_xpath):
     '''
@@ -127,6 +154,9 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
     forum_users = get_forum_url(dom, url, post_user_xpath) \
         if post_user_xpath else len(forum_posts) * ['']
 
+    add_anonymous_user(dom, forum_users, post_xpath, post_user_xpath)
+    # forum_posts = remove_first_none_posts(forum_posts, forum_users)
+    forum_urls = get_same_number_of_url_as_posts(len(forum_posts), forum_urls)
     print("****", forum_users)
 
     return [ExtractionResult(post, url, date, user)
