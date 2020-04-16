@@ -240,7 +240,7 @@ def extract_posts(forum):
 
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern,
               'xpath_score': xpath_score, 'forum_posts': forum_posts,
-              'dragnet': content_comments, 'url_xpath_pattern': None,
+              'dragnet': None, 'url_xpath_pattern': None,
               'date_xpath_pattern': None, 'user_xpath_pattern': None}
 
     # add the post URL
