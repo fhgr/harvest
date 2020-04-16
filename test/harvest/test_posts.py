@@ -145,7 +145,7 @@ def test_extract_posts_forum_medschat(load_test_data):
     assert post['xpath_pattern'] == '//span[@class="search_results"]/../..'
     assert post['url_xpath_pattern'] == '//a[@class="action_bar_blue"]'
     assert post['date_xpath_pattern'] == '//span[@class="search_results"]/../..//span[@class="small soft"]/time'
-    assert 'user_xpath_pattern' not in post  # Todo extract user with no link
+    assert post['user_xpath_pattern'] == None # Todo extract user with no link
 
 
 def test_extract_posts_forum_msconnection(load_test_data):
@@ -189,7 +189,7 @@ def test_extract_posts_forum_mumsnet(load_test_data):
     assert post['url_xpath_pattern'] == '//a[@class="add_message"]' # Wrong url. No url exists for this page
     assert post['date_xpath_pattern'] == \
            '//div[contains(@class, \'talk-post\') and contains(@class, \'message\')]/p/../..//span[@class="post_time"]'
-    assert 'user_xpath_pattern' not in post  # Todo extract user with no link
+    assert post['user_xpath_pattern'] == None # Todo extract user with no link
 
 
 def test_extract_posts_forum_uninterrupted(load_test_data):
