@@ -22,9 +22,7 @@ def get_link(dom, post_xpath, base_url, forum_posts):
     Obtains the URL to the given post.
     '''
     url_candidates = defaultdict(lambda: {'elements': [],
-                                          'has_anchor_tag': False,
-                                          'is_forum_path': True,
-                                          'is_same_resource': True})
+                                          'has_anchor_tag': False})
 
     # post elements contains less elements than forum_posts (!)
     # since it takes the container with the posts
@@ -54,7 +52,8 @@ def get_link(dom, post_xpath, base_url, forum_posts):
 
     # filter candidate paths
     for xpath, matches in list(url_candidates.items()):
-        if len(matches['elements']) != len(forum_posts):
+        # consider the number of posts or the number of posts + 2 spare for possible header elements
+        if len(forum_posts) - len(matches['elements']) not in range(0, 3):
             del url_candidates[xpath]
 
     # filter candidates that contain URLs to other domains and
@@ -73,17 +72,15 @@ def get_link(dom, post_xpath, base_url, forum_posts):
             if not current_url_path:
                 current_url_path = parsed_url.path
 
-            if parsed_url.path != forum_url.path:
-                url_candidates[xpath]['is_forum_path'] = False
-
-            if parsed_url.path != current_url_path:
-                url_candidates[xpath]['is_same_resource'] = False
+            if parsed_url.path != forum_url.path or parsed_url.path != current_url_path:
+                del url_candidates[xpath]
+                break
 
     # obtain the most likely url path
     logging.info("%d rather than one URL candidate remaining. "
                  "Sorting candidates.", len(url_candidates))
     for xpath, _ in sorted(url_candidates.items(),
-                           key=lambda x: (x[1]['has_anchor_tag'], x[1]['is_forum_path'], x[1]['is_same_resource']),
+                           key=lambda x: (x[1]['has_anchor_tag']),
                            reverse=True):
         logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath

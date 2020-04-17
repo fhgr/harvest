@@ -35,7 +35,7 @@ def test_extract_posts_forum_community_scope(load_test_data):
     assert post['url'] == 'https://community.scope.org.uk/discussion/57774/copd'
     assert post['xpath_pattern'] == \
            '//div[contains(@class, \'Message\') and contains(@class, \'userContent\')]/../../../..'
-    assert post['url_xpath_pattern'] == '//a[@class="Permalink"][time]'
+    assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
            '//a[@class="Permalink"]/time[not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
@@ -76,7 +76,7 @@ def test_extract_posts_forum_myparkinsons(load_test_data):
 
     assert post['url'] == 'https://myparkinsons.org/cgi-bin/forum/topic_show.pl?id=5231'
     assert post['xpath_pattern'] == '//html/body/div/center/table/center/table/tr/td/../..'
-    assert post['url_xpath_pattern'] == None
+    assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
            '//html/body/div/center/table/center/table/tr/td/table/tr/td/b[not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
@@ -89,7 +89,7 @@ def test_extract_posts_forum_shift_ms(load_test_data):
 
     assert post['url'] == 'https://shift.ms/topic/cbd-oil-11'
     assert post['xpath_pattern'] == '//div[@class="bbp-reply-content"]/p/../../..'
-    assert post['url_xpath_pattern'] == '//a[@class="bbp-author-avatar"]'
+    assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == '//div[@class="bbp-reply-date"][not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
            '//a[@class="bbp-author-name"][not(*) and string-length(text()) > 0]'
@@ -130,7 +130,7 @@ def test_extract_posts_forum_medhelp(load_test_data):
 
     assert post['url'] == 'https://www.medhelp.org/posts/Heart-Disease/Wolfe-Parkinson-White-Syndrome/show/250747'
     assert post['xpath_pattern'] == '//div[@class="resp_body "]/..'
-    assert post['url_xpath_pattern'] == '//div[@class="user_avatar"]/a[img]'
+    assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == '//time[@class="mh_timestamp"][not(*) and string-length(text()) = 0]'
     assert post['user_xpath_pattern'] == '//div[@class="username"]/a[span]'
 
@@ -146,7 +146,7 @@ def test_extract_posts_forum_medschat(load_test_data):
     assert post['xpath_pattern'] == '//span[@class="search_results"]/../..'
     assert post['url_xpath_pattern'] == '//a[@class="action_bar_blue"][not(*) and string-length(text()) > 0]'
     assert post['date_xpath_pattern'] == '//span[@class="small soft"]/time[not(*) and string-length(text()) > 0]'
-    assert post['user_xpath_pattern'] == None # Todo extract user with no link
+    assert post['user_xpath_pattern'] is None # Todo extract user with no link
 
 
 def test_extract_posts_forum_msconnection(load_test_data):
@@ -186,7 +186,7 @@ def test_extract_posts_forum_mumsnet(load_test_data):
            'https://www.mumsnet.com/Talk/pregnancy/3749275-Pregnant-with-a-black-mixed-race-with-black-baby'
     assert post['xpath_pattern'] == \
            '//div[contains(@class, \'talk-post\') and contains(@class, \'message\')]/p/../..'
-    assert post['url_xpath_pattern'] == '//a[@class="add_message"][not(*) and string-length(text()) > 0]' # Wrong url. No url exists for this page
+    assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
            '//span[@class="post_time"][not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == None # Todo extract user with no link
@@ -198,6 +198,6 @@ def test_extract_posts_forum_uninterrupted(load_test_data):
 
     assert post['url'] == 'https://www.uninterrupted.org.au/blog-category/my-ms-journey'
     assert post['xpath_pattern'] == '//div[@class="field-content"]/p/../../..'
-    assert post['url_xpath_pattern'] == '//span[@class="field-content"]/a[not(*) and string-length(text()) > 0]'
-    assert post['date_xpath_pattern'] == None
+    assert post['url_xpath_pattern'] is None
+    assert post['date_xpath_pattern'] is None
     assert post['user_xpath_pattern'] == '//a[@class="username"][not(*) and string-length(text()) > 0]'
