@@ -118,7 +118,7 @@ def test_extract_posts_forum_healingwell(load_test_data):
     assert post['xpath_pattern'] == '//div[@class="post-body"]/../../..'
     assert post['url_xpath_pattern'] == \
            '//div[(contains(@class, \'post-even\')) or (contains(@class, \'post-odd\'))]/a[not(*) and string-length(text()) = 0]'
-    assert post['date_xpath_pattern'] == '//div[@class="posts"][not(*) and string-length(text()) > 0]'
+    assert post['date_xpath_pattern'] == '//div[@class="posted"][not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
            '//a[@class="user-name"][not(*) and string-length(text()) > 0]'
 

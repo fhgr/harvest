@@ -11,9 +11,10 @@ from datetime import datetime
 from dateparser.search import search_dates
 from dateutil import parser
 
-from harvest.utils import get_xpath_expression, get_cleaned_element_text, get_xpath_expression_child_filter
+from harvest.utils import (get_xpath_expression, get_cleaned_element_text, get_xpath_expression_child_filter,
+                           get_merged_xpath)
 
-MAX_DATE_LEN = 32
+MAX_DATE_LEN = 64
 LANGUAGES = ('en', 'de', 'es')
 
 
@@ -60,6 +61,12 @@ def get_date(dom, post_xpath, base_url, forum_posts):
             xpath = get_xpath_expression(tag)
             xpath += get_xpath_expression_child_filter(tag)
             date_candidates[xpath]['elements'].append(tag)
+
+    # merge xpath
+    for merged_xpath in get_merged_xpath(date_candidates.keys()):
+        merged_elements = dom.xpath(merged_xpath)
+        if merged_elements:
+            date_candidates[merged_xpath]['elements'] = merged_elements
 
     # filter candidate paths that do not yield a date for every post
     for xpath, matches in list(date_candidates.items()):
@@ -109,7 +116,6 @@ def get_date(dom, post_xpath, base_url, forum_posts):
                     date_candidates[xpath]['chronological_order'] = False
 
             previous_date = date_candidates[xpath]['most_recent_date']
-
 
     # obtain the most likely url path
     if len(date_candidates) > 1:
