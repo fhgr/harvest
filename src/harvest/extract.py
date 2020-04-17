@@ -24,6 +24,7 @@ from harvest.cleanup.forum_post import remove_boilerplate, remove_first_none_pos
 
 ExtractionResult = namedtuple('ExtractionResult', ('post', 'url', 'date',
                                                    'user'))
+LANGUAGES = ('en', 'de', 'es')
 
 
 def _get_reference_url(url, element):
@@ -74,8 +75,9 @@ def get_forum_date(dom, post_date_xpath):
                      for e in dom.xpath(post_date_xpath) if search_dates(_get_date_text(e)))
     for date_mention in date_mentions:
         found = None
-        for _, date in sorted(search_dates(date_mention),
-                              key=itemgetter(1), reverse=True):
+        for _, date in sorted(
+                search_dates(date_mention, settings={'RETURN_AS_TIMEZONE_AWARE': False}, languages=LANGUAGES),
+                key=itemgetter(1), reverse=True):
             if date <= datetime.now():
                 found = date
                 break
