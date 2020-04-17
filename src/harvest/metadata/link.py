@@ -9,7 +9,7 @@ import logging
 from collections import defaultdict
 from urllib.parse import urlparse, urljoin
 
-from harvest.utils import get_xpath_expression
+from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter, get_merged_xpath
 
 
 # strategy
@@ -22,6 +22,7 @@ def get_link(dom, post_xpath, base_url, forum_posts):
     Obtains the URL to the given post.
     '''
     url_candidates = defaultdict(lambda: {'elements': [],
+                                          'has_anchor_tag': False,
                                           'is_forum_path': True,
                                           'is_same_resource': True})
 
@@ -34,13 +35,22 @@ def get_link(dom, post_xpath, base_url, forum_posts):
         for tag in element.iterdescendants():
             if tag.tag == 'a':
                 xpath = get_xpath_expression(tag)
+                xpath += get_xpath_expression_child_filter(tag)
                 # anchor tags with the name attribute will
                 # lead to the post
                 if 'name' in (attr.lower() for attr in tag.attrib):
                     logging.info("Computed URL xpath for forum %s.", base_url)
-                    return xpath
+                    url_candidates[xpath]['has_anchor_tag'] = True
 
                 url_candidates[xpath]['elements'].append(tag)
+
+    # merge xpath
+    for merged_xpath in get_merged_xpath(url_candidates.keys()):
+        merged_elements = dom.xpath(merged_xpath)
+        if merged_elements:
+            url_candidates[merged_xpath]['elements'] = merged_elements
+            if 'name' in (attr.lower() for attr in merged_elements[0].attrib):
+                url_candidates[merged_xpath]['has_anchor_tag'] = True
 
     # filter candidate paths
     for xpath, matches in list(url_candidates.items()):
@@ -73,7 +83,7 @@ def get_link(dom, post_xpath, base_url, forum_posts):
     logging.info("%d rather than one URL candidate remaining. "
                  "Sorting candidates.", len(url_candidates))
     for xpath, _ in sorted(url_candidates.items(),
-                           key=lambda x: (x[1]['is_forum_path'], x[1]['is_same_resource']),
+                           key=lambda x: (x[1]['has_anchor_tag'], x[1]['is_forum_path'], x[1]['is_same_resource']),
                            reverse=True):
         logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath

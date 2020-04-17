@@ -108,3 +108,70 @@ def get_cleaned_element_text(element):
     '''
     return f'{element.text or ""} {element.tail or ""}'.replace(",", " ") \
         .replace(";", " ").strip()
+
+
+def _get_classes_concat_with_and_condition(classes):
+    return "(" + " and ".join(["contains(@class, \'" + x + "\')" for x in classes]) + ")"
+
+
+def _get_merged_classes_xpath_condition(classes, classes2):
+    return "[" + _get_classes_concat_with_and_condition(classes) + " or " + \
+           _get_classes_concat_with_and_condition(classes2) + "]"
+
+
+def _get_classes(regex_class_detection, xpath):
+    """
+    Args:
+        regex_class_detection: regex to detect class
+        xpath: xpath string to get classes
+
+    Returns: list of classes
+    """
+    classes = re.findall(regex_class_detection, xpath)
+    return list(filter(None, re.sub(r"@class=|\"|\[|\]", "", classes[0]).split(" ")))
+
+
+def _get_merged_xpath(regex_class_detection, xpath, xpath_to_compare, merged_xpath):
+    """
+    Args:
+        regex_class_detection: Regex expression to look for class attributes
+        xpath: xpath string
+        xpath_to_compare: xpath string to compare with param xpath
+        merged_xpath: dictionary with already merged xpath
+
+    Returns: merged xpath if possible. If no match is found, none is returned
+
+    """
+    xpath_without_class = re.sub(regex_class_detection, "", xpath)
+    xpath_to_compare_without_class = re.sub(regex_class_detection, "", xpath_to_compare)
+    if xpath_without_class == xpath_to_compare_without_class and xpath_to_compare not in merged_xpath:
+        classes = _get_classes(regex_class_detection, xpath)
+        classes_to_compare = _get_classes(regex_class_detection, xpath_to_compare)
+        same_classes = list(set(classes).intersection(classes_to_compare))
+        if same_classes:
+            same_classes.sort()
+            return re.sub(regex_class_detection, "[" + _get_classes_concat_with_and_condition(same_classes) + "]",
+                          xpath)
+
+        merged_xpath_classes = _get_merged_classes_xpath_condition(classes, classes_to_compare)
+        return re.sub(regex_class_detection, merged_xpath_classes, xpath)
+
+
+def get_merged_xpath(xpaths):
+    """
+    Args:
+        xpaths: List of xpaths to look for xpaths which can be merged
+
+    Returns: A list with the merged xpath
+    """
+    merged_xpaths = dict()
+    regex_class_detection = r"\[@class=\".*\"\]"
+    for xpath in xpaths:
+        if re.search(regex_class_detection, xpath):
+            for xpath_to_compare in [x for x in xpaths if x != xpath]:
+                if re.search(regex_class_detection, xpath_to_compare):
+                    merged_xpath = _get_merged_xpath(regex_class_detection, xpath, xpath_to_compare, merged_xpaths)
+                    if merged_xpath:
+                        merged_xpaths[xpath] = merged_xpath
+
+    return list(merged_xpaths.values())

@@ -11,7 +11,7 @@ from datetime import datetime
 from dateparser.search import search_dates
 from dateutil import parser
 
-from harvest.utils import get_xpath_expression, get_cleaned_element_text
+from harvest.utils import get_xpath_expression, get_cleaned_element_text, get_xpath_expression_child_filter
 
 MAX_DATE_LEN = 32
 LANGUAGES = ('en', 'de', 'es')
@@ -57,7 +57,8 @@ def get_date(dom, post_xpath, base_url, forum_posts):
                     tag.tag == 'time' and 'datetime' in tag.attrib):
                 continue
 
-            xpath = post_xpath + get_xpath_expression(tag)
+            xpath = get_xpath_expression(tag)
+            xpath += get_xpath_expression_child_filter(tag)
             date_candidates[xpath]['elements'].append(tag)
 
     # filter candidate paths that do not yield a date for every post

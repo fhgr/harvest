@@ -11,7 +11,7 @@ import numpy as np
 from collections import defaultdict
 from urllib.parse import urlparse, urljoin
 
-from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter
+from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter, get_merged_xpath
 
 USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
 FORBIDDEN_TERMS = ('terms of use', 'privacy policy', 'add message', 'reply', 'answer', 'share', 'report')
@@ -27,34 +27,6 @@ def get_user_name(name, base_url):
     A standardized representation of the user's URL.
     '''
     return ".".join(name.split()) + '@' + urlparse(base_url).netloc
-
-
-def _get_regex_for_merged_classes(same_classes, xpath):
-    same_classes_with_contains = ["contains(@class, \'" + x + "\')" for x in same_classes]
-    same_classes_with_contains.sort()
-    return re.sub(r"\/\/a\[@class=\"[\d\w\s]*\"\]", "//a[" + " and ".join(same_classes_with_contains) + "]", xpath)
-
-
-def _append_merged_url_candidates(url_candidates, new_x_path, matches):
-    for element in [m for m in matches['elements'] if
-                    m not in url_candidates[new_x_path]['elements']]:
-        url_candidates[new_x_path]['elements'].append(element)
-
-
-def _merge_same_classes(url_candidates):
-    candidates_to_check = [c for c in list(url_candidates.items()) if
-                           c[1]['elements'] and c[1]['elements'][0].attrib.get('class')]
-    for xpath, matches in candidates_to_check:
-        for xpathToCompare, matchesToCompare in [c for c in candidates_to_check if c[0] != xpath]:
-            html_class = matches['elements'][0].attrib.get('class').split(" ")
-            html_class_to_compare = matchesToCompare['elements'][0].attrib.get('class').split(" ")
-            same_classes = list(set(html_class).intersection(html_class_to_compare))
-            if same_classes:
-                new_x_path = _get_regex_for_merged_classes(same_classes, xpath)
-                new_x_path_to_compare = _get_regex_for_merged_classes(same_classes, xpathToCompare)
-                if new_x_path == new_x_path_to_compare:
-                    _append_merged_url_candidates(url_candidates, new_x_path, matches)
-                    _append_merged_url_candidates(url_candidates, new_x_path, matchesToCompare)
 
 
 def _set_user_hint_exits_for_attribute(matches, attribute_value):
@@ -124,7 +96,10 @@ def get_user(dom, post_xpath, base_url, posts):
                 xpath += get_xpath_expression_child_filter(tag)
                 url_candidates[xpath]['elements'].append(tag)
 
-    _merge_same_classes(url_candidates)
+    for merged_xpath in get_merged_xpath(url_candidates.keys()):
+        merged_elements = dom.xpath(merged_xpath)
+        if merged_elements:
+            url_candidates[merged_xpath]['elements'] = merged_elements
 
     # filter candidate paths
     for xpath, matches in list(url_candidates.items()):
