@@ -215,7 +215,7 @@ def extract_posts(forum):
 
     if not candidate_xpaths:
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
-        return {'url': forum['url'], 'dragnet': content_comments}
+        return {'url': forum['url'], 'dragnet': None}
 
     # obtain anchor node
     candidate_xpaths.sort()
