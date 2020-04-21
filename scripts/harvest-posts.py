@@ -40,19 +40,20 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
                 g.write(forum['html'])
 
         logging.info("Processing " + forum['url'])
-        post = posts.extract_posts(forum)
-        result[domain].append(post)
+        postXPath = posts.extract_posts(forum)
+        result[domain].append(postXPath)
 
         if args.result_directory:
             result_fname = os.path.join(args.result_directory, f'{domain}.csv')
-            with open(result_fname, 'w') as g:
+            with open(result_fname, 'a') as g:
                 csvwriter = writer(g)
-                csvwriter.writerow(['user', 'date', 'url', 'post'])
+                if os.path.getsize(result_fname) == 0:
+                    csvwriter.writerow(['user', 'date', 'url', 'post'])
                 for post in extract_posts(forum['html'], forum['url'],
-                                          post['xpath_pattern'],
-                                          post['url_xpath_pattern'],
-                                          post['date_xpath_pattern'],
-                                          post['user_xpath_pattern']):
+                                          postXPath['xpath_pattern'],
+                                          postXPath['url_xpath_pattern'],
+                                          postXPath['date_xpath_pattern'],
+                                          postXPath['user_xpath_pattern']):
                     csvwriter.writerow([post.user, post.date, post.url,
                                         post.post])
 
