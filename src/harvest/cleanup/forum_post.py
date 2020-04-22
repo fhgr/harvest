@@ -4,6 +4,7 @@
 Removes common suffixes and suffixes from forum posts.
 '''
 
+
 def compute_common_suffix_count(post_list):
     '''
     Returns:
@@ -19,6 +20,7 @@ def compute_common_suffix_count(post_list):
 
     return len(confirmed_suffix_terms)
 
+
 def remove_suffix(post_list):
     '''
     Removes common suffixes from list posts.
@@ -27,6 +29,7 @@ def remove_suffix(post_list):
     if suffix_count == 0:
         return post_list
     return [' '.join(posts.split(' ')[:-suffix_count]) for posts in post_list]
+
 
 def compute_common_prefix_count(post_list):
     '''
@@ -43,6 +46,7 @@ def compute_common_prefix_count(post_list):
 
     return len(confirmed_prefix_terms)
 
+
 def remove_prefix(post_list):
     '''
     Removes common suffixes from list posts.
@@ -51,6 +55,7 @@ def remove_prefix(post_list):
     if prefix_count == 0:
         return post_list
     return [' '.join(posts.split(' ')[prefix_count:]) for posts in post_list]
+
 
 def remove_boilerplate(post_list):
     '''
@@ -63,3 +68,10 @@ def remove_boilerplate(post_list):
         return post_list
     suffix_count = -suffix_count if suffix_count != 0 else None
     return [' '.join(posts.split(' ')[prefix_count:suffix_count]) for posts in post_list]
+
+
+def remove_first_none_posts(post_list, user_list):
+    difference_user = len(post_list) - len(user_list)
+    if len(post_list) > 3 and difference_user in range(1, 3):
+        return post_list[difference_user:]
+    return post_list

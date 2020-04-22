@@ -20,18 +20,18 @@ parser.add_argument('corpus_path', metavar='corpus_path', help='Path to the inpu
 parser.add_argument('output_file', metavar='output_file', help='Output file for the parser\'s results.')
 parser.add_argument('--result-directory', dest='result_directory', help='Optional directory for storing CSV results.')
 parser.add_argument('--debug-directory', dest='debug_directory', help='Optional directory for debug information.')
-parser.add_argument('--corpus-include-string', dest='corpus_include_string', help='Optionally restrict the input corpus to URLs that match the corpus include string.')
+parser.add_argument('--corpus-include-string', dest='corpus_include_string',
+                    help='Optionally restrict the input corpus to URLs that match the corpus include string.')
 
 args = parser.parse_args()
 
-
 result = defaultdict(list)
 for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
-     opener = gzip.open if fname.endswith(".gz") else open
-     with opener(fname) as f:
+    opener = gzip.open if fname.endswith(".gz") else open
+    with opener(fname) as f:
         forum = load(f)
         domain = urlparse(forum['url']).netloc
-        if args.corpus_include_string and not args.corpus_include_string in forum['url']:
+        if args.corpus_include_string and args.corpus_include_string not in forum['url']:
             continue
 
         if args.debug_directory:
@@ -49,13 +49,12 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
                 csvwriter = writer(g)
                 csvwriter.writerow(['user', 'date', 'url', 'post'])
                 for post in extract_posts(forum['html'], forum['url'],
-                                            post['xpath_pattern'],
-                                            post['url_xpath_pattern'],
-                                            post['date_xpath_pattern'],
-                                            post['user_xpath_pattern']):
+                                          post['xpath_pattern'],
+                                          post['url_xpath_pattern'],
+                                          post['date_xpath_pattern'],
+                                          post['user_xpath_pattern']):
                     csvwriter.writerow([post.user, post.date, post.url,
                                         post.post])
 
 with open(args.output_file, "w") as f:
     dump(result, f, indent=True)
-

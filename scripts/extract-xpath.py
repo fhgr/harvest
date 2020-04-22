@@ -20,8 +20,8 @@ if __name__ == '__main__':
     fname = argv[1]
     xpath = argv[2]
 
-    with open(fname) as f:
-        html = open(fname, encoding="utf8").read()
+    with open(fname, encoding="utf8") as f:
+        html = f.read()
         html = RE_FILTER_XML_HEADER.sub("", html)
         dom = etree.HTML(html)
         for element in dom.xpath(xpath):
