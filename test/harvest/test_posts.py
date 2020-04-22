@@ -25,7 +25,7 @@ def test_extract_posts_forum_angelman(load_test_data):
     assert post['date_xpath_pattern'] == \
            '//div[@class="generic"]/table/tr/td/small/br[not(*) and string-length(text()) = 0]'
     assert post['user_xpath_pattern'] == \
-           '//div[@class="message-author icon-user"]/a[not(*) and string-length(text()) > 0]'
+           '//div/table/tr/td/div[@class="message-author icon-user"]/a[not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_community_scope(load_test_data):
@@ -37,9 +37,9 @@ def test_extract_posts_forum_community_scope(load_test_data):
            '//div[contains(@class, \'Message\') and contains(@class, \'userContent\')]/../../../..'
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
-           '//a[@class="Permalink"]/time[not(*) and string-length(text()) > 0]'
+           '//div/div/div/span/a[@class="Permalink"]/time[not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
-           '//a[@class="Username"][not(*) and string-length(text()) > 0]'
+           '//div/div/div/span/a[@class="Username"][not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_maladiesraresinfo(load_test_data):
@@ -49,7 +49,7 @@ def test_extract_posts_forum_maladiesraresinfo(load_test_data):
     assert post['url'] == 'https://forums.maladiesraresinfo.org/post11011.html#p11011'
     assert post['xpath_pattern'] == '//div[@class="content"]/../..'
     assert post['url_xpath_pattern'] == '//a[@class="top"][not(*) and string-length(text()) > 0]'
-    assert post['date_xpath_pattern'] == '//p[@class="author"]/strong[a]'
+    assert post['date_xpath_pattern'] == '//div/p[@class="author"]/strong[a]'
     assert post['user_xpath_pattern'] == \
            '//dl[@class="postprofile"]/dt/a[not(*) and string-length(text()) > 0]'
 
@@ -64,9 +64,9 @@ def test_extract_posts_forum_healthunlocked(load_test_data):
            '//div[contains(@class, \'response-text-content\') and contains(@class, \'text-content\')]/span/p/../../..'
     assert post['url_xpath_pattern'] == \
            '//div[@class="post-media-info__action"]/a[not(*) and string-length(text()) > 0]'
-    assert post['date_xpath_pattern'] == '//time[@class=""][not(*) and string-length(text()) > 0]'
+    assert post['date_xpath_pattern'] == '//div/div/div/time[@class=""][not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
-           '//div[@class="response-header__author-content"]/a[not(*) and string-length(text()) > 0]'
+           '//div/div/div[@class="response-header__author-content"]/a[not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_myparkinsons(load_test_data):
@@ -90,9 +90,9 @@ def test_extract_posts_forum_shift_ms(load_test_data):
     assert post['url'] == 'https://shift.ms/topic/cbd-oil-11'
     assert post['xpath_pattern'] == '//div[@class="bbp-reply-content"]/p/../../..'
     assert post['url_xpath_pattern'] is None
-    assert post['date_xpath_pattern'] == '//div[@class="bbp-reply-date"][not(*) and string-length(text()) > 0]'
+    assert post['date_xpath_pattern'] == '//div/div/div[@class="bbp-reply-date"][not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
-           '//a[@class="bbp-author-name"][not(*) and string-length(text()) > 0]'
+           '//div/div/a[@class="bbp-author-name"][not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_amsel(load_test_data):
@@ -104,9 +104,9 @@ def test_extract_posts_forum_amsel(load_test_data):
     assert post['xpath_pattern'] == '//td[contains(@class, \'forum_message\') and contains(@class, \'bg_7\')]/..'
     assert post['url_xpath_pattern'] == '//td[@class="bg_7 x_textsize_1"]/p/a[not(*) and string-length(text()) = 0]'
     assert post['date_xpath_pattern'] == \
-           '//td[@class="bg_3 x_textsize_1"]/p[not(*) and string-length(text()) > 0]'
+           '//tr/td[@class="bg_3 x_textsize_1"]/p[not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
-           '//td[@class="bg_7 x_textsize_1"]/p/a[not(*) and string-length(text()) > 0]'
+           '//tr/td[@class="bg_7 x_textsize_1"]/p/a[not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_healingwell(load_test_data):
@@ -118,9 +118,9 @@ def test_extract_posts_forum_healingwell(load_test_data):
     assert post['xpath_pattern'] == '//div[@class="post-body"]/../../..'
     assert post['url_xpath_pattern'] == \
            '//div[(contains(@class, \'post-even\')) or (contains(@class, \'post-odd\'))]/a[not(*) and string-length(text()) = 0]'
-    assert post['date_xpath_pattern'] == '//div[@class="posted"][not(*) and string-length(text()) > 0]'
+    assert post['date_xpath_pattern'] == '//div/div/div[@class="posted"][not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
-           '//a[@class="user-name"][not(*) and string-length(text()) > 0]'
+           '//div/div/div/div/div/div/a[@class="user-name"][not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_medhelp(load_test_data):
@@ -131,8 +131,8 @@ def test_extract_posts_forum_medhelp(load_test_data):
     assert post['url'] == 'https://www.medhelp.org/posts/Heart-Disease/Wolfe-Parkinson-White-Syndrome/show/250747'
     assert post['xpath_pattern'] == '//div[@class="resp_body "]/..'
     assert post['url_xpath_pattern'] is None
-    assert post['date_xpath_pattern'] == '//time[@class="mh_timestamp"][not(*) and string-length(text()) = 0]'
-    assert post['user_xpath_pattern'] == '//div[@class="username"]/a[span]'
+    assert post['date_xpath_pattern'] == '//div/div/div/time[@class="mh_timestamp"][not(*) and string-length(text()) = 0]'
+    assert post['user_xpath_pattern'] == '//div/div/div[@class="username"]/a[span]'
 
 
 def test_extract_posts_forum_medschat(load_test_data):
@@ -145,8 +145,8 @@ def test_extract_posts_forum_medschat(load_test_data):
                           'TMP-DS-Tabitp-to-take-due-to-COPD-206090.htm?srcq=copd'
     assert post['xpath_pattern'] == '//span[@class="search_results"]/../..'
     assert post['url_xpath_pattern'] == '//a[@class="action_bar_blue"][not(*) and string-length(text()) > 0]'
-    assert post['date_xpath_pattern'] == '//span[@class="small soft"]/time[not(*) and string-length(text()) > 0]'
-    assert post['user_xpath_pattern'] is None # Todo extract user with no link
+    assert post['date_xpath_pattern'] == '//div/span[@class="small soft"]/time[not(*) and string-length(text()) > 0]'
+    assert post['user_xpath_pattern'] == '//div[@class="list_item_b_content"]/strong[not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_msconnection(load_test_data):
@@ -159,8 +159,8 @@ def test_extract_posts_forum_msconnection(load_test_data):
     assert post['xpath_pattern'] == '//div[@class="discussion-post-body"]'
     assert post['url_xpath_pattern'] == None
     assert post['date_xpath_pattern'] == \
-           '//div[@class="discussion-post-meta-info"]/br[not(*) and string-length(text()) = 0]'
-    assert post['user_xpath_pattern'] == '//a[@class="PostUser"][not(*) and string-length(text()) > 0]'
+           '//header/div/div[@class="discussion-post-meta-info"]/br[not(*) and string-length(text()) = 0]'
+    assert post['user_xpath_pattern'] == '//header/div/div/a[@class="PostUser"][not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_msworld(load_test_data):
@@ -172,9 +172,9 @@ def test_extract_posts_forum_msworld(load_test_data):
     assert post['xpath_pattern'] == \
            '//blockquote[contains(@class, \'postcontent\') and contains(@class, \'restore\')]/../../../../..'
     assert post['url_xpath_pattern'] == '//a[@class="postcounter"][not(*) and string-length(text()) > 0]'
-    assert post['date_xpath_pattern'] == '//span[@class="date"][span]'
+    assert post['date_xpath_pattern'] == '//div/div/span/span[@class="date"][span]'
     assert post['user_xpath_pattern'] == \
-           '//a[(contains(@class, \'popupctrl\') and contains(@class, \'username\'))][strong]'
+           '//div/div/div/div/div/a[(contains(@class, \'popupctrl\') and contains(@class, \'username\'))][strong]'
 
 
 def test_extract_posts_forum_mumsnet(load_test_data):
@@ -188,8 +188,8 @@ def test_extract_posts_forum_mumsnet(load_test_data):
            '//div[contains(@class, \'talk-post\') and contains(@class, \'message\')]/p/../..'
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
-           '//span[@class="post_time"][not(*) and string-length(text()) > 0]'
-    assert post['user_xpath_pattern'] == None # Todo extract user with no link
+           '//div/span[@class="post_time"][not(*) and string-length(text()) > 0]'
+    assert post['user_xpath_pattern'] == '//div/span/span[@class="nick"][not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_uninterrupted(load_test_data):
@@ -200,4 +200,4 @@ def test_extract_posts_forum_uninterrupted(load_test_data):
     assert post['xpath_pattern'] == '//div[@class="field-content"]/p/../../..'
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] is None
-    assert post['user_xpath_pattern'] == '//a[@class="username"][not(*) and string-length(text()) > 0]'
+    assert post['user_xpath_pattern'] == '//div/span/a[@class="username"][not(*) and string-length(text()) > 0]'
