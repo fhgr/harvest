@@ -59,7 +59,7 @@ def replace_xpath_last_class_with_and_condition(x_path):
     return x_path
 
 
-def get_xpath_expression(element):
+def get_xpath_expression(element, parent_element=None, single_class_filter=False):
     '''
     Returns:
       str -- The xpath expression for the given comment.
@@ -67,9 +67,12 @@ def get_xpath_expression(element):
     xpath_list = []
     has_class_filter = False
 
-    while not has_class_filter and element is not None:
-        xpath_expression = _get_xpath_element_expression(element)
-        has_class_filter = "[" in xpath_expression
+    while (not has_class_filter or parent_element is not None and element is not parent_element) \
+            and element is not None:
+        without_class_filter = single_class_filter and has_class_filter
+        xpath_expression = _get_xpath_element_expression(element, without_class_filter=without_class_filter)
+        if not has_class_filter and "[" in xpath_expression:
+            has_class_filter = True
         xpath_list.append(xpath_expression)
 
         element = element.getparent()
@@ -78,14 +81,16 @@ def get_xpath_expression(element):
     return "//" + "/".join(xpath_list)
 
 
-def _get_xpath_element_expression(element):
+def _get_xpath_element_expression(element, without_class_filter=False):
     '''
     Returns:
       str -- The xpath expression for the given element.
     '''
-    attr_filter = " & ".join(['@%s="%s"' % (key, value)
-                              for key, value in element.attrib.items()
-                              if key in VALID_NODE_TYPE_QUALIFIERS])
+    attr_filter = None
+    if not without_class_filter:
+        attr_filter = " & ".join(['@%s="%s"' % (key, value)
+                                  for key, value in element.attrib.items()
+                                  if key in VALID_NODE_TYPE_QUALIFIERS])
     return element.tag + "[%s]" % attr_filter if attr_filter else element.tag
 
 
@@ -153,8 +158,9 @@ def _get_merged_xpath(regex_class_detection, xpath, xpath_to_compare, merged_xpa
             return re.sub(regex_class_detection, "[" + _get_classes_concat_with_and_condition(same_classes) + "]",
                           xpath)
 
-        merged_xpath_classes = _get_merged_classes_xpath_condition(classes, classes_to_compare)
-        return re.sub(regex_class_detection, merged_xpath_classes, xpath)
+        if classes and classes_to_compare:
+            merged_xpath_classes = _get_merged_classes_xpath_condition(classes, classes_to_compare)
+            return re.sub(regex_class_detection, merged_xpath_classes, xpath)
 
 
 def get_merged_xpath(xpaths):
