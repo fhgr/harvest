@@ -99,12 +99,13 @@ def test_extract_posts_forum_amsel(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://www.amsel.de/multiple-sklerose-forum/?tnr=1&mnr=217239&archiv_flag=2&fv=1'
-    assert post['xpath_pattern'] == '//td[@class="forum_message bg_7"]/..'
-    assert post['url_xpath_pattern'] == '//td[@class="bg_7 x_textsize_1"]/p/a[not(*) and string-length(text()) = 0]'
+    assert post['xpath_pattern'] == "//td[contains(concat(' ',@class,' '),' forum_message ')]/.."
+    assert post['url_xpath_pattern'] == ("//td[(contains(@class, 'x_textsize_1'))]/p/a[not(*) and "
+                                         'string-length(text()) = 0]')
     assert post['date_xpath_pattern'] == \
-           '//tr/td[@class="bg_3 x_textsize_1"]/p[not(*) and string-length(text()) > 0]'
+           '//tr/td[(contains(@class, \'x_textsize_1\'))]/p[not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
-           '//tr/td[@class="bg_7 x_textsize_1"]/p/a[not(*) and string-length(text()) > 0]'
+           '//tr/td[(contains(@class, \'x_textsize_1\'))]/p/a[not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_healingwell(load_test_data):
@@ -129,7 +130,8 @@ def test_extract_posts_forum_medhelp(load_test_data):
     assert post['url'] == 'https://www.medhelp.org/posts/Heart-Disease/Wolfe-Parkinson-White-Syndrome/show/250747'
     assert post['xpath_pattern'] == '//div[@class="resp_body "]/..'
     assert post['url_xpath_pattern'] is None
-    assert post['date_xpath_pattern'] == '//div/div/div/time[@class="mh_timestamp"][not(*) and string-length(text()) = 0]'
+    assert post[
+               'date_xpath_pattern'] == '//div/div/div/time[@class="mh_timestamp"][not(*) and string-length(text()) = 0]'
     assert post['user_xpath_pattern'] == '//div/div/div[@class="username"]/a[span]'
 
 
@@ -144,7 +146,8 @@ def test_extract_posts_forum_medschat(load_test_data):
     assert post['xpath_pattern'] == '//span[@class="search_results"]/../..'
     assert post['url_xpath_pattern'] == '//a[@class="action_bar_blue"][not(*) and string-length(text()) > 0]'
     assert post['date_xpath_pattern'] == '//div/span[@class="small soft"]/time[not(*) and string-length(text()) > 0]'
-    assert post['user_xpath_pattern'] == '//div[@class="list_item_b_content"]/strong[not(*) and string-length(text()) > 0]'
+    assert post[
+               'user_xpath_pattern'] == '//div[@class="list_item_b_content"]/strong[not(*) and string-length(text()) > 0]'
 
 
 def test_extract_posts_forum_msconnection(load_test_data):

@@ -233,18 +233,16 @@ def extract_posts(forum):
 
     # Check if combinations of classes result in detecting leading post
     candidate_xpaths = []
-    final_xpaths = get_xpath_combinations_for_classes(xpath_pattern)
-    for final_xpath in final_xpaths:
+    for final_xpath in get_xpath_combinations_for_classes(xpath_pattern):
         new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
-                                                       xpath=final_xpath, blacklisted_tags=BLACKLIST_TAGS)
-        if xpath_element_count > 1:
+                                                               xpath=final_xpath, blacklisted_tags=BLACKLIST_TAGS)
+        if (xpath_element_count < new_xpath_element_count <= xpath_element_count + 2 or
+                xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
             candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
 
-    candidate_xpaths.sort()
-    new_xpath_score, new_xpath_element_count, new_xpath_pattern = candidate_xpaths.pop()
-    if xpath_element_count < new_xpath_element_count < xpath_element_count + 4 and new_xpath_score > xpath_score:
-        xpath_score = new_xpath_score
-        xpath_pattern = new_xpath_pattern
+    if candidate_xpaths:
+        candidate_xpaths.sort()
+        xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
 
     logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern,
                  xpath_score)
