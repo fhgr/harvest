@@ -45,18 +45,25 @@ def get_xpath_expression_child_filter(element):
     return child_filter
 
 
-def replace_xpath_last_class_with_and_condition(x_path):
+def get_xpath_combinations_for_classes(x_path):
     """
     Returns:
-        str -- The last classes selector are replaced by and conditions.
+        array -- Possible xpath combinations of classes
     """
     classes_x_path = re.findall(r"(?!.*\[)@class=\".*\"", x_path)
+    xpath_combinations = []
     if classes_x_path:
         classes = list(filter(None, re.sub(r"@class=|\"", "", classes_x_path[-1]).split(" ")))
+        for html_class in classes:
+            xpath_combinations.append(
+                re.sub(r"(?!.*\[)@class=\".*\"\]", r"contains(concat(' ',@class,' '),' " + html_class + r" ')]",
+                       x_path))
         if len(classes) > 1:
             new_classes = " and ".join(["contains(@class, \'" + x + "\')" for x in classes]) + "]"
-            return re.sub(r"(?!.*\[)@class=\".*\"\]", new_classes, x_path)
-    return x_path
+            xpath_combinations.append(re.sub(r"(?!.*\[)@class=\".*\"\]", new_classes, x_path))
+    if not xpath_combinations:
+        xpath_combinations = [x_path]
+    return xpath_combinations
 
 
 def get_xpath_expression(element, parent_element=None, single_class_filter=False):

@@ -66,8 +66,8 @@
 from itertools import chain
 
 from harvest.cleanup.forum_post import remove_boilerplate
-from harvest.utils import (get_xpath_expression, extract_text, get_html_dom,
-                           get_xpath_tree_text, replace_xpath_last_class_with_and_condition)
+from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
+                           get_xpath_tree_text)
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
@@ -231,10 +231,24 @@ def extract_posts(forum):
         xpath_pattern = new_xpath_pattern
         xpath_score = new_xpath_score
 
+    # Check if combinations of classes result in detecting leading post
+    candidate_xpaths = []
+    final_xpaths = get_xpath_combinations_for_classes(xpath_pattern)
+    for final_xpath in final_xpaths:
+        new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
+                                                       xpath=final_xpath, blacklisted_tags=BLACKLIST_TAGS)
+        if xpath_element_count > 1:
+            candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
+
+    candidate_xpaths.sort()
+    new_xpath_score, new_xpath_element_count, new_xpath_pattern = candidate_xpaths.pop()
+    if xpath_element_count < new_xpath_element_count < xpath_element_count + 4:
+        xpath_score = new_xpath_score
+        xpath_pattern = new_xpath_pattern
+
     logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern,
                  xpath_score)
     if xpath_pattern:
-        xpath_pattern = replace_xpath_last_class_with_and_condition(xpath_pattern)
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
 
