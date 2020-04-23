@@ -33,8 +33,7 @@ def test_extract_posts_forum_community_scope(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://community.scope.org.uk/discussion/57774/copd'
-    assert post['xpath_pattern'] == \
-           '//div[contains(@class, \'Message\') and contains(@class, \'userContent\')]/../../../..'
+    assert post['xpath_pattern'] == '//div[@class="Message userContent"]/../../../..'
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
            '//div/div/div/span/a[@class="Permalink"]/time[not(*) and string-length(text()) > 0]'
@@ -60,8 +59,7 @@ def test_extract_posts_forum_healthunlocked(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://healthunlocked.com/parkinsonsmovement/posts/142058845/artane-anyone'
-    assert post['xpath_pattern'] == \
-           '//div[contains(@class, \'response-text-content\') and contains(@class, \'text-content\')]/span/p/../../..'
+    assert post['xpath_pattern'] == '//div[@class="response-text-content text-content"]/span/p/../../..'
     assert post['url_xpath_pattern'] == \
            '//div[@class="post-media-info__action"]/a[not(*) and string-length(text()) > 0]'
     assert post['date_xpath_pattern'] == '//div/div/div/time[@class=""][not(*) and string-length(text()) > 0]'
@@ -101,7 +99,7 @@ def test_extract_posts_forum_amsel(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://www.amsel.de/multiple-sklerose-forum/?tnr=1&mnr=217239&archiv_flag=2&fv=1'
-    assert post['xpath_pattern'] == '//td[contains(@class, \'forum_message\') and contains(@class, \'bg_7\')]/..'
+    assert post['xpath_pattern'] == '//td[@class="forum_message bg_7"]/..'
     assert post['url_xpath_pattern'] == '//td[@class="bg_7 x_textsize_1"]/p/a[not(*) and string-length(text()) = 0]'
     assert post['date_xpath_pattern'] == \
            '//tr/td[@class="bg_3 x_textsize_1"]/p[not(*) and string-length(text()) > 0]'
@@ -169,8 +167,7 @@ def test_extract_posts_forum_msworld(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://www.msworld.org/forum/showthread.php?145403-Sort-of-new-here'
-    assert post['xpath_pattern'] == \
-           '//blockquote[contains(@class, \'postcontent\') and contains(@class, \'restore\')]/../../../../..'
+    assert post['xpath_pattern'] == '//blockquote[@class="postcontent restore"]/../../../../..'
     assert post['url_xpath_pattern'] == '//a[@class="postcounter"][not(*) and string-length(text()) > 0]'
     assert post['date_xpath_pattern'] == '//div/div/span/span[@class="date"][span]'
     assert post['user_xpath_pattern'] == \
@@ -184,8 +181,7 @@ def test_extract_posts_forum_mumsnet(load_test_data):
 
     assert post['url'] == \
            'https://www.mumsnet.com/Talk/pregnancy/3749275-Pregnant-with-a-black-mixed-race-with-black-baby'
-    assert post['xpath_pattern'] == \
-           '//div[contains(@class, \'talk-post\') and contains(@class, \'message\')]/p/../..'
+    assert post['xpath_pattern'] == "//div[contains(concat(' ',@class,' '),' talk-post ')]/p/../.."
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
            '//div/span[@class="post_time"][not(*) and string-length(text()) > 0]'

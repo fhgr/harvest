@@ -242,7 +242,7 @@ def extract_posts(forum):
 
     candidate_xpaths.sort()
     new_xpath_score, new_xpath_element_count, new_xpath_pattern = candidate_xpaths.pop()
-    if xpath_element_count < new_xpath_element_count < xpath_element_count + 4:
+    if xpath_element_count < new_xpath_element_count < xpath_element_count + 4 and new_xpath_score > xpath_score:
         xpath_score = new_xpath_score
         xpath_pattern = new_xpath_pattern
 
