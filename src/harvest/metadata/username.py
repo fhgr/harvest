@@ -59,7 +59,7 @@ def _filter_items_with_forbidden_words(url_candidates):
                 break
 
 
-def _filter_user_name_without_link(url_candidates, post_elements):
+def _filter_user_name_without_link(url_candidates):
     for xpath, candidate in [x for x in url_candidates.items() if not x[1]['is_link']]:
         previous_element = None
         has_changed = False
@@ -76,6 +76,9 @@ def _filter_user_name_without_link(url_candidates, post_elements):
         if not has_changed and url_candidates[xpath]:
             del url_candidates[xpath]
 
+
+def _filter_more_than_one_element_per_post(url_candidates, post_elements):
+    for xpath, candidate in [x for x in url_candidates.items()]:
         for post_element in post_elements:
             if len([x for x in post_element.iterdescendants() if x in candidate['elements']]) > 1 and \
                     url_candidates[xpath]:
@@ -93,7 +96,7 @@ def _filter_post_links(url_candidates):
 
 def _is_user_name_pattern(text):
     return text and text.strip() and 3 < len(text.strip()) < 100 and len(
-        text.split(" ")) <= 3 and not re.findall('http[s]?://', text)
+        text.strip().split(" ")) <= 3 and not re.findall('http[s]?://', text)
 
 
 def _contains_user_name_pattern(tag):
@@ -142,9 +145,11 @@ def _get_user(dom, post_elements, base_url, posts):
 
     _filter_items_with_forbidden_words(url_candidates)
 
-    _filter_user_name_without_link(url_candidates, post_elements)
+    _filter_user_name_without_link(url_candidates)
 
     _filter_post_links(url_candidates)
+
+    _filter_more_than_one_element_per_post(url_candidates, post_elements)
 
     _set_user_hint_exits(url_candidates)
 
