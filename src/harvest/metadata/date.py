@@ -10,11 +10,12 @@ from collections import defaultdict
 from datetime import datetime
 from dateparser.search import search_dates
 from dateutil import parser
+from lxml import etree
 
 from harvest.utils import (get_xpath_expression, get_cleaned_element_text, get_xpath_expression_child_filter,
                            get_merged_xpath)
 
-MAX_DATE_LEN = 64
+MAX_DATE_LEN = 120
 LANGUAGES = ('en', 'de', 'es')
 
 
@@ -31,8 +32,8 @@ def _get_date(dom, post_elements, base_url, forum_posts):
             text = get_cleaned_element_text(tag)
             # do not consider text larger than MAX_DATE_LEN relevant for date extraction
 
-            if len(text) > MAX_DATE_LEN or not search_dates(text, languages=LANGUAGES) and not (
-                    tag.tag == 'time' and 'datetime' in tag.attrib):
+            if (len(text) > MAX_DATE_LEN or not search_dates(text, languages=LANGUAGES) or
+                    tag.tag is etree.Comment) and not (tag.tag == 'time' and 'datetime' in tag.attrib):
                 continue
 
             xpath = get_xpath_expression(tag, parent_element=element, single_class_filter=True)
@@ -69,7 +70,8 @@ def _get_date(dom, post_elements, base_url, forum_posts):
                 time = match.attrib.get('datetime', '')
                 extracted_dates = [(time, parser.parse(time, ignoretz=True))]
             else:
-                extracted_dates = search_dates(get_cleaned_element_text(match), languages=LANGUAGES)
+                extracted_dates = search_dates(get_cleaned_element_text(match), languages=LANGUAGES,
+                                               settings={'RETURN_AS_TIMEZONE_AWARE': False})
 
             if not extracted_dates:
                 del date_candidates[xpath]
@@ -100,7 +102,7 @@ def _get_date(dom, post_elements, base_url, forum_posts):
                      "Sorting candidates.", len(date_candidates))
     for xpath, _ in sorted(date_candidates.items(),
                            key=lambda x: (x[1]['same_size_posts'], x[1]['chronological_order'],
-                                          x[1]['most_recent_date'] - x[1]['lowermost_date']),
+                                          x[1]['most_recent_date']),
                            reverse=True):
         logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath
