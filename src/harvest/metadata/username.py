@@ -91,20 +91,15 @@ def _filter_post_links(url_candidates):
             del url_candidates[xpath]
 
 
-def _is_user_name_pattern(tag):
-    text = tag.text
+def _is_user_name_pattern(text):
     return text and text.strip() and 3 < len(text.strip()) < 100 and len(
         text.split(" ")) <= 3 and not re.findall('http[s]?://', text)
 
 
 def _contains_user_name_pattern(tag):
-    if _is_user_name_pattern(tag):
-        return True
-    else:
-        for sub_tag in tag.iterdescendants():
-            if _is_user_name_pattern(sub_tag):
-                return True
-    return False
+    if tag.getchildren():
+        return _is_user_name_pattern(" ".join([get_cleaned_element_text(x) for x in tag.iterdescendants()]))
+    return _is_user_name_pattern(tag.text)
 
 
 def _collect_candidates_paths(post_elements):
