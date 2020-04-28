@@ -117,7 +117,7 @@ def get_matching_element(comment, dom):
 
     for e in dom.iter():
         text = (e.text or "").strip()
-        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]):
+        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]) and e.tag is not etree.Comment:
             return e
 
     return None
@@ -215,7 +215,9 @@ def extract_posts(forum):
 
     if not candidate_xpaths:
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
-        return {'url': forum['url'], 'dragnet': None}
+        return {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
+                'xpath_score': None, 'forum_posts': None,
+                'date_xpath_pattern': None, 'user_xpath_pattern': None}
 
     # obtain anchor node
     candidate_xpaths.sort()
@@ -237,7 +239,7 @@ def extract_posts(forum):
         new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
                                                                xpath=final_xpath, blacklisted_tags=BLACKLIST_TAGS)
         if (xpath_element_count < new_xpath_element_count <= xpath_element_count + 2 or
-                xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
+            xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
             candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
 
     if candidate_xpaths:
