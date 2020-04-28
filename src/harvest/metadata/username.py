@@ -12,7 +12,8 @@ from collections import defaultdict
 from dateparser.search import search_dates
 from urllib.parse import urlparse, urljoin
 
-from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter, get_merged_xpath
+from harvest.utils import (get_xpath_expression, get_xpath_expression_child_filter, get_merged_xpath,
+                           get_cleaned_element_text)
 
 USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
 FORBIDDEN_TERMS = ('terms of use', 'privacy policy', 'add message', 'reply', 'answer', 'share', 'report', 'registered')
@@ -50,7 +51,7 @@ def _set_text_changes(url_candidates):
                 matches['score'] += SCORE_TEXT_CHANCE_INCREMENT
 
 
-def _remove_items_with_forbidden_words(url_candidates):
+def _filter_items_with_forbidden_words(url_candidates):
     for xpath, matches in list(url_candidates.items()):
         for tag in matches['elements']:
             if tag.text and tag.text.lower() in FORBIDDEN_TERMS:
@@ -58,7 +59,7 @@ def _remove_items_with_forbidden_words(url_candidates):
                 break
 
 
-def _filter_user_name_without_link(url_candidates):
+def _filter_user_name_without_link(url_candidates, post_elements):
     for xpath, candidate in [x for x in url_candidates.items() if not x[1]['is_link']]:
         previous_element = None
         has_changed = False
@@ -71,22 +72,48 @@ def _filter_user_name_without_link(url_candidates):
                 del url_candidates[xpath]
                 break
             previous_element = element
+
         if not has_changed and url_candidates[xpath]:
             del url_candidates[xpath]
 
+        for post_element in post_elements:
+            if len([x for x in post_element.iterdescendants() if x in candidate['elements']]) > 1 and \
+                    url_candidates[xpath]:
+                del url_candidates[xpath]
+                break
 
-def _is_user_name_without_link(tag):
+
+def _filter_post_links(url_candidates):
+    for xpath, candidate in list(url_candidates.items()):
+        sequence = re.findall(r"\d+", " ".join(get_cleaned_element_text(x) for x in candidate['elements']))
+        sequence = [int(s) for s in sequence]
+        if len(sequence) > 2 and all(x + 1 == y for x, y in zip(sequence, sequence[1:])):
+            del url_candidates[xpath]
+
+
+def _is_user_name_pattern(tag):
     text = tag.text
     return text and text.strip() and 3 < len(text.strip()) < 100 and len(
-        text.split(" ")) <= 3 and not tag.getchildren()
+        text.split(" ")) <= 3 and not re.findall('http[s]?://', text)
+
+
+def _contains_user_name_pattern(tag):
+    if _is_user_name_pattern(tag):
+        return True
+    else:
+        for sub_tag in tag.iterdescendants():
+            if _is_user_name_pattern(sub_tag):
+                return True
+    return False
 
 
 def _collect_candidates_paths(post_elements):
     url_candidates = defaultdict(lambda: {'elements': [], 'is_link': True, 'score': 0})
     for element in post_elements:
         for tag in element.iterdescendants():
-            if tag.tag == 'a' and 'href' in tag.attrib or \
-                    tag.tag in ['span', 'strong', 'div', 'b'] and _is_user_name_without_link(tag):
+            if ((tag.tag == 'a' and 'href' in tag.attrib) or
+                (tag.tag in ['span', 'strong', 'div', 'b'] and not tag.getchildren())) and \
+                    _contains_user_name_pattern(tag):
                 xpath = get_xpath_expression(tag, parent_element=element, single_class_filter=True)
                 xpath += get_xpath_expression_child_filter(tag)
                 url_candidates[xpath]['elements'].append(tag)
@@ -118,9 +145,11 @@ def _get_user(dom, post_elements, base_url, posts):
         if len(matches['elements']) > len(posts) or len(matches['elements']) < len(posts) - 2:
             del url_candidates[xpath]
 
-    _remove_items_with_forbidden_words(url_candidates)
+    _filter_items_with_forbidden_words(url_candidates)
 
-    _filter_user_name_without_link(url_candidates)
+    _filter_user_name_without_link(url_candidates, post_elements)
+
+    _filter_post_links(url_candidates)
 
     _set_user_hint_exits(url_candidates)
 
