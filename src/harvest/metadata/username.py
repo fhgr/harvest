@@ -8,6 +8,7 @@ import logging
 import re
 import numpy as np
 
+from itertools import combinations
 from collections import defaultdict
 from dateparser.search import search_dates
 from urllib.parse import urlparse, urljoin
@@ -59,17 +60,24 @@ def _filter_items_with_forbidden_words(url_candidates):
                 break
 
 
-def _filter_user_name_without_link(url_candidates):
+def _filter_user_name_without_link_includes_date(url_candidates):
     for xpath, candidate in [x for x in url_candidates.items() if not x[1]['is_link']]:
+        for element in candidate['elements']:
+            text = element.text.strip()
+            if search_dates(text) or text in FORBIDDEN_TERMS:
+                del url_candidates[xpath]
+                break
+
+
+def _filter_user_name_without_link_and_no_text_changes(url_candidates):
+    for xpath, candidate in [x for x in url_candidates.items()
+                             if not x[1]['is_link'] and x[1]['score'] == 0]:
         previous_element = None
         has_changed = False
         for element in candidate['elements']:
             text = element.text.strip()
             if previous_element is not None and previous_element.text.strip() != text:
                 has_changed = True
-                break
-            if search_dates(text) or text in FORBIDDEN_TERMS:
-                del url_candidates[xpath]
                 break
             previous_element = element
 
@@ -78,12 +86,13 @@ def _filter_user_name_without_link(url_candidates):
 
 
 def _filter_more_than_one_element_per_post(url_candidates, post_elements):
-    for xpath, candidate in [x for x in url_candidates.items()]:
-        for post_element in post_elements:
-            if len([x for x in post_element.iterdescendants() if x in candidate['elements']]) > 1 and \
-                    url_candidates[xpath]:
-                del url_candidates[xpath]
-                break
+    if len(post_elements) > 1:
+        for xpath, candidate in [x for x in url_candidates.items()]:
+            for post_element in post_elements:
+                if len([x for x in post_element.iterdescendants() if x in candidate['elements']]) > 1 and \
+                        url_candidates[xpath]:
+                    del url_candidates[xpath]
+                    break
 
 
 def _filter_post_links(url_candidates):
@@ -94,9 +103,26 @@ def _filter_post_links(url_candidates):
             del url_candidates[xpath]
 
 
+def _filter_post_to_candidate_length(url_candidates, posts):
+    for xpath, matches in list(url_candidates.items()):
+        if len(matches['elements']) > len(posts) or len(matches['elements']) < len(posts) - 2:
+            del url_candidates[xpath]
+
+
+def _filter_url_other_domain(url_candidates, base_url):
+    forum_url = urlparse(base_url)
+    for xpath, matches in [x for x in url_candidates.items() if x[1]['is_link']]:
+        for match in matches['elements']:
+            logging.info("Match attribs: %s of type %s.", match, type(match))
+            parsed_url = urlparse(urljoin(base_url, match.attrib.get('href', '')))
+            if parsed_url.netloc and parsed_url.netloc != forum_url.netloc or parsed_url.path == forum_url.path:
+                del url_candidates[xpath]
+                break
+
+
 def _is_user_name_pattern(text):
     return text and text.strip() and 3 < len(text.strip()) < 100 and len(
-        text.strip().split(" ")) <= 3 and not re.findall('http[s]?://', text)
+        text.strip().split(" ")) <= 4 and not re.findall('http[s]?://', text)
 
 
 def _contains_user_name_pattern(tag):
@@ -105,12 +131,28 @@ def _contains_user_name_pattern(tag):
     return _is_user_name_pattern(tag.text)
 
 
+def _combine_xpath_candidates(url_candidates, number_of_posts):
+    candidates_less_then_posts = [x for x in url_candidates.items() if len(x[1]['elements']) < number_of_posts]
+    if number_of_posts > 1 and len(candidates_less_then_posts) > 1:
+        valid_combinations = []
+        for comb in combinations(candidates_less_then_posts, 2):
+            if len(comb[0][1]['elements']) + len(comb[1][1]['elements']) == number_of_posts:
+                valid_combinations.append(comb)
+        for elements1, elements2 in sorted(valid_combinations,
+                                           key=lambda x: (x[0][1]['score'] + x[1][1]['score']), reverse=True):
+            combined_xpath = elements1[0] + "|" + elements2[0]
+            url_candidates[combined_xpath]['elements'] = elements1[1]['elements'] + elements2[1]['elements']
+            url_candidates[combined_xpath]['is_link'] = elements1[1]['is_link'] or elements2[1]['is_link']
+            url_candidates[combined_xpath]['score'] = min(elements1[1]['score'], elements2[1]['score'])
+            break
+
+
 def _collect_candidates_paths(post_elements):
     url_candidates = defaultdict(lambda: {'elements': [], 'is_link': True, 'score': 0})
     for element in post_elements:
         for tag in element.iterdescendants():
-            if ((tag.tag == 'a' and 'href' in tag.attrib) or
-                (tag.tag in ['span', 'strong', 'div', 'b'] and not tag.getchildren())) and \
+            if ((tag.tag == 'a' and 'href' in tag.attrib and not [x for x in list(tag) if x.tag == 'time']) or
+                (tag.tag in ['span', 'strong', 'div', 'b'] and not list(tag))) and \
                     _contains_user_name_pattern(tag):
                 xpath = get_xpath_expression(tag, parent_element=element, single_class_filter=True)
                 xpath += get_xpath_expression_child_filter(tag)
@@ -138,33 +180,19 @@ def _get_user(dom, post_elements, base_url, posts):
         if merged_elements:
             url_candidates[merged_xpath]['elements'] = merged_elements
 
-    # filter candidate paths
-    for xpath, matches in list(url_candidates.items()):
-        if len(matches['elements']) > len(posts) or len(matches['elements']) < len(posts) - 2:
-            del url_candidates[xpath]
-
+    _filter_url_other_domain(url_candidates, base_url)
     _filter_items_with_forbidden_words(url_candidates)
-
-    _filter_user_name_without_link(url_candidates)
-
+    _filter_user_name_without_link_includes_date(url_candidates)
     _filter_post_links(url_candidates)
-
     _filter_more_than_one_element_per_post(url_candidates, post_elements)
 
     _set_user_hint_exits(url_candidates)
-
     _set_text_changes(url_candidates)
 
-    # filter candidates that contain URLs to other domains and
-    # record the urls' targets
-    forum_url = urlparse(base_url)
-    for xpath, matches in [x for x in url_candidates.items() if x[1]['is_link']]:
-        for match in matches['elements']:
-            logging.info("Match attribs: %s of type %s.", match, type(match))
-            parsed_url = urlparse(urljoin(base_url, match.attrib.get('href', '')))
-            if parsed_url.netloc and parsed_url.netloc != forum_url.netloc or parsed_url.path == forum_url.path:
-                del url_candidates[xpath]
-                break
+    _combine_xpath_candidates(url_candidates, len(posts))
+    _filter_user_name_without_link_and_no_text_changes(url_candidates)
+
+    _filter_post_to_candidate_length(url_candidates, posts)
 
     # obtain the most likely url path
     logging.info("%d rather than one URL candidate remaining. "

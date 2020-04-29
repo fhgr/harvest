@@ -200,3 +200,15 @@ def test_extract_posts_forum_uninterrupted(load_test_data):
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] is None
     assert post['user_xpath_pattern'] == '//div/span/a[@class="username"][not(*) and string-length(text()) > 0]'
+
+
+def test_extract_posts_forum_statcounter(load_test_data):
+    forum_test_data = load_test_data("https%3A%2F%2Fforum.statcounter.com%2Fthreads%2Fcustom-tags-examples.44340%2F.json.gz")
+    post = extract_posts(forum_test_data)
+
+    assert post['url'] == 'https://forum.statcounter.com/threads/custom-tags-examples.44340/'
+    assert post['xpath_pattern'] == '//div[@class="bbWrapper"]/../../..'
+    assert post['url_xpath_pattern'] is None
+    assert post['date_xpath_pattern'] == '//header/a/time[@class="u-dt"][not(*) and string-length(text()) > 0]'
+    assert post['user_xpath_pattern'] == '//div/section/div/h4/a[@class="username "][span]|//div/section/' \
+                                         'div/h4/a[@class="username "][not(*) and string-length(text()) > 0]'
