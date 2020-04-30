@@ -14,9 +14,9 @@ from lxml import etree
 
 from harvest.utils import (get_xpath_expression, get_cleaned_element_text, get_xpath_expression_child_filter,
                            get_merged_xpath)
+from harvest.config import LANGUAGES
 
 MAX_DATE_LEN = 120
-LANGUAGES = ('en', 'de', 'es')
 
 
 def _get_date(dom, post_elements, base_url, forum_posts):

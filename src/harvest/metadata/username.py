@@ -8,6 +8,7 @@ import logging
 import re
 import numpy as np
 
+from harvest.config import LANGUAGES
 from itertools import combinations
 from collections import defaultdict
 from dateparser.search import search_dates
@@ -17,7 +18,8 @@ from harvest.utils import (get_xpath_expression, get_xpath_expression_child_filt
                            get_cleaned_element_text)
 
 USER_PAGE_HINTS = ('user', 'member', 'person', 'profile')
-FORBIDDEN_TERMS = ('terms of use', 'privacy policy', 'add message', 'reply', 'answer', 'share', 'report', 'registered')
+FORBIDDEN_TERMS = ('terms of use', 'privacy policy', 'add message', 'reply', 'answer', 'share', 'report', 'registered',
+                   'setting')
 
 SCORE_INCREMENT = 1
 SCORE_TEXT_CHANCE_INCREMENT = 3
@@ -55,7 +57,7 @@ def _set_text_changes(url_candidates):
 def _filter_items_with_forbidden_words(url_candidates):
     for xpath, matches in list(url_candidates.items()):
         for tag in matches['elements']:
-            if tag.text and tag.text.lower() in FORBIDDEN_TERMS:
+            if tag.text and tag.text.strip().lower() in FORBIDDEN_TERMS:
                 del url_candidates[xpath]
                 break
 
@@ -64,7 +66,7 @@ def _filter_user_name_without_link_includes_date(url_candidates):
     for xpath, candidate in [x for x in url_candidates.items() if not x[1]['is_link']]:
         for element in candidate['elements']:
             text = element.text.strip()
-            if search_dates(text) or text in FORBIDDEN_TERMS:
+            if search_dates(text, languages=LANGUAGES) or text in FORBIDDEN_TERMS:
                 del url_candidates[xpath]
                 break
 

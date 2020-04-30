@@ -19,11 +19,11 @@ from dateutil import parser
 
 from harvest.utils import get_html_dom, get_xpath_tree_text, get_cleaned_element_text, extract_text
 
-from harvest.cleanup.forum_post import remove_boilerplate, remove_first_none_posts
+from harvest.cleanup.forum_post import remove_boilerplate
+from harvest.config import LANGUAGES
 
 ExtractionResult = namedtuple('ExtractionResult', ('post', 'url', 'date',
                                                    'user'))
-LANGUAGES = ('en', 'de', 'es')
 
 
 def _get_reference_url(url, element):
