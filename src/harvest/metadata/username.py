@@ -234,4 +234,4 @@ def get_user(dom, post_xpath, base_url, posts):
         if result or len(post_elements) <= 1:
             return result
         post_xpath = post_xpath + "/.."
-        post_elements = dom.xpath(post_xpath + post_xpath)
+        post_elements = dom.xpath(post_xpath)
