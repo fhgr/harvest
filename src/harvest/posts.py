@@ -86,7 +86,7 @@ MATCH_PREFIX_SIZE = 30
 VSM_MODEL_SIZE = 5000
 
 # tags that are not allowed to be part of a forum xpath (lowercase)
-BLACKLIST_TAGS = ('option', 'footer', 'form', 'aside', 'head', 'tfoot')
+BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
