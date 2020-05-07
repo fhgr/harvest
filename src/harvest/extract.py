@@ -13,7 +13,7 @@ by the machine learning component.
 from collections import namedtuple
 from datetime import datetime
 from operator import itemgetter
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from dateparser.search import search_dates
 from dateutil import parser
 
@@ -193,7 +193,7 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
         if post_url_xpath else generate_forum_url(url, len(forum_posts))
     forum_dates = get_forum_date(dom, post_date_xpath) \
         if post_date_xpath else len(forum_posts) * ['']
-    forum_users = get_forum_user(dom, url, post_user_xpath) \
+    forum_users = get_forum_user(dom, urlparse(url).scheme + '://' + urlparse(url).hostname, post_user_xpath) \
         if post_user_xpath else len(forum_posts) * ['']
 
     add_anonymous_user(dom, forum_users, post_xpath, post_user_xpath)
