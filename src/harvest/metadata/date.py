@@ -8,13 +8,12 @@ import logging
 
 from collections import defaultdict
 from datetime import datetime
-from dateparser.search import search_dates
+from harvest.date_search import search_dates
 from dateutil import parser
 from lxml import etree
 
 from harvest.utils import (get_xpath_expression, get_cleaned_element_text, get_xpath_expression_child_filter,
                            get_merged_xpath)
-from harvest.config import LANGUAGES
 
 MAX_DATE_LEN = 120
 
@@ -32,7 +31,7 @@ def _get_date(dom, post_elements, base_url, forum_posts):
             text = get_cleaned_element_text(tag)
             # do not consider text larger than MAX_DATE_LEN relevant for date extraction
 
-            if (len(text) > MAX_DATE_LEN or not search_dates(text, languages=LANGUAGES) or
+            if (len(text) > MAX_DATE_LEN or not search_dates(text) or
                     tag.tag is etree.Comment) and not (tag.tag == 'time' and 'datetime' in tag.attrib):
                 continue
 
@@ -70,8 +69,7 @@ def _get_date(dom, post_elements, base_url, forum_posts):
                 time = match.attrib.get('datetime', '')
                 extracted_dates = [(time, parser.parse(time, ignoretz=True))]
             else:
-                extracted_dates = search_dates(get_cleaned_element_text(match), languages=LANGUAGES,
-                                               settings={'RETURN_AS_TIMEZONE_AWARE': False})
+                extracted_dates = search_dates(get_cleaned_element_text(match))
 
             if not extracted_dates:
                 del date_candidates[xpath]
