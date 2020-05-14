@@ -197,7 +197,6 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
         if post_user_xpath else len(forum_posts) * ['']
 
     add_anonymous_user(dom, forum_users, post_xpath, post_user_xpath)
-    # forum_posts = remove_first_none_posts(forum_posts, forum_users)
     forum_urls = get_same_number_of_url_as_posts(len(forum_posts), forum_urls)
     print("****", forum_users)
 
