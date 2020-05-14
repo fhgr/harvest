@@ -65,16 +65,18 @@ def _get_user_name(url, element):
         return extract_text(element)
 
 
-def _get_date_text(time_element):
-    if time_element.tag == 'time' and 'datetime' in time_element.attrib:
-        time = time_element.attrib.get('datetime', '')
-        parsed_time = parser.parse(time, ignoretz=True)
-        return parsed_time.ctime()
-    else:
-        return get_cleaned_element_text(time_element)
+def _get_date_text(time_element, time_element_as_datetime=True):
+    is_tag_time = time_element.tag == 'time'
+    if is_tag_time and 'datetime' in time_element.attrib:
+        if time_element_as_datetime:
+            time = time_element.attrib.get('datetime', '')
+            parsed_time = parser.parse(time, ignoretz=True)
+            return is_tag_time, parsed_time
+
+    return is_tag_time, get_cleaned_element_text(time_element)
 
 
-def get_forum_date(dom, post_date_xpath):
+def get_forum_date(dom, post_date_xpath, result_as_datetime=True):
     '''
     Selects the date present in the given post_date_xpath. Future dates are
     automatically filtered. If no date has been identified for a post, a None
@@ -83,21 +85,29 @@ def get_forum_date(dom, post_date_xpath):
     Args:
         dom: the DOM representation of the forum page.
         post_date_xpath (str): The xpath of the forum date.
+        result_as_datetime (bool): If true the date are returned as datetime. Otherwise the date are returned as string
 
     Returns:
         list -- A list of dates for every forum post.
     '''
     result = []
-    date_mentions = (_get_date_text(e)
-                     for e in dom.xpath(post_date_xpath) if search_dates(_get_date_text(e), languages=LANGUAGES))
-    for date_mention in date_mentions:
+    date_mentions = (_get_date_text(e, time_element_as_datetime=result_as_datetime)
+                     for e in dom.xpath(post_date_xpath) if
+                     e.tag == 'time' or search_dates(_get_date_text(e), languages=LANGUAGES))
+    for is_time_element, date_mention in date_mentions:
         found = None
-        for _, date in sorted(
-                search_dates(date_mention, settings={'RETURN_AS_TIMEZONE_AWARE': False}, languages=LANGUAGES),
-                key=itemgetter(1), reverse=True):
-            if date <= datetime.now():
-                found = date
-                break
+        if is_time_element:
+            found = date_mention
+        else:
+            for data_as_string, date in sorted(
+                    search_dates(date_mention, settings={'RETURN_AS_TIMEZONE_AWARE': False}, languages=LANGUAGES),
+                    key=itemgetter(1), reverse=True):
+                if date <= datetime.now():
+                    if result_as_datetime:
+                        found = date
+                    else:
+                        found = data_as_string
+                    break
         result.append(found)
 
     return result
@@ -181,7 +191,7 @@ def add_anonymous_user(dom, users, post_xpath, post_user_xpath):
 
 
 def extract_posts(html_content, url, post_xpath, post_url_xpath,
-                  post_date_xpath, post_user_xpath):
+                  post_date_xpath, post_user_xpath, result_as_datetime=True):
     '''
     Returns:
       dict -- The extracted forum post and the corresponding metadat.
@@ -191,7 +201,7 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
     forum_posts = remove_boilerplate(get_xpath_tree_text(dom, post_xpath))
     forum_urls = get_forum_url(dom, url, post_url_xpath) \
         if post_url_xpath else generate_forum_url(url, len(forum_posts))
-    forum_dates = get_forum_date(dom, post_date_xpath) \
+    forum_dates = get_forum_date(dom, post_date_xpath, result_as_datetime=result_as_datetime) \
         if post_date_xpath else len(forum_posts) * ['']
     forum_users = get_forum_user(dom, urlparse(url).scheme + '://' + urlparse(url).hostname, post_user_xpath) \
         if post_user_xpath else len(forum_posts) * ['']

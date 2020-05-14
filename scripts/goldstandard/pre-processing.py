@@ -46,12 +46,13 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
                                           postXPath['xpath_pattern'],
                                           postXPath['url_xpath_pattern'],
                                           postXPath['date_xpath_pattern'],
-                                          postXPath['user_xpath_pattern']):
-                    document["gold_standard_annotation"] \
-                        .append({"post_text": {"text": post.post},
-                                 "datetime": {"datetime": post.date.strftime("%Y-%m-%d %H:%M:%S") if post.date else ""},
-                                 "user": {"user": post.user},
-                                 "post_link": {"link": post.url}})
+                                          postXPath['user_xpath_pattern'], result_as_datetime=False):
+                    post_element = {"post_text": {"text": post.post},
+                                    "datetime": {"datetime": post.date},
+                                    "user": {"user": post.user}}
+                    if postXPath['url_xpath_pattern']:
+                        post_element["post_link"] = {"link": post.url}
+                    document["gold_standard_annotation"].append(post_element)
 
                 write_to_json(forum['url'], args.result_directory, document)
         else:
