@@ -54,7 +54,7 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
                                               postXPath['xpath_pattern'],
                                               postXPath['url_xpath_pattern'],
                                               postXPath['date_xpath_pattern'],
-                                              postXPath['user_xpath_pattern']):
+                                              postXPath['user_xpath_pattern'], result_as_datetime=False):
                         csvwriter.writerow([post.user, post.date, post.url,
                                             post.post])
 
