@@ -93,7 +93,7 @@ def get_forum_date(dom, post_date_xpath, result_as_datetime=True):
     result = []
     date_mentions = (_get_date_text(e, time_element_as_datetime=result_as_datetime)
                      for e in dom.xpath(post_date_xpath) if
-                     e.tag == 'time' or search_dates(_get_date_text(e), languages=LANGUAGES))
+                     e.tag == 'time' or search_dates(_get_date_text(e)[1], languages=LANGUAGES))
     for is_time_element, date_mention in date_mentions:
         found = None
         if is_time_element:
