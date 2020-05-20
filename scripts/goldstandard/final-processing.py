@@ -6,7 +6,6 @@ import logging
 from glob import glob
 from json import load
 from collections import defaultdict
-from urllib.parse import urlparse
 from scripts.goldstandard.file import write_to_json
 
 logging.getLogger().setLevel(logging.INFO)
@@ -35,19 +34,20 @@ result = defaultdict(list)
 for no, fname in enumerate(glob(args.pre_gold_document_path + "*.json")):
     with open(fname) as f:
         forum = load(f)
-        domain = urlparse(forum['url']).netloc
         if args.corpus_include_string and args.corpus_include_string not in forum['url']:
             continue
 
         logging.info("Creating final gold standard document for " + forum['url'])
         search_start_index = 0
         for post in forum['gold_standard_annotation']:
-            index_post_text = add_start_end(post['post_text'], forum['text'], post['post_text']['text'],
-                                            search_start_index)
-            add_start_end(post['datetime'], forum['text'], post['datetime']['datetime'], search_start_index)
-            add_start_end(post['user'], forum['text'], post['user']['user'], search_start_index)
-            add_start_end(post['post_link'], forum['text'], post['post_link']['link'], search_start_index)
-            if index_post_text > -1:
-                search_start_index = index_post_text + len(post['post_text']['text'])
+            index_post_text = [add_start_end(post['post_text'], forum['text'], post['post_text']['text'],
+                                             search_start_index),
+                               add_start_end(post['datetime'], forum['text'], post['datetime']['datetime'],
+                                             search_start_index),
+                               add_start_end(post['user'], forum['text'], post['user']['user'], search_start_index),
+                               add_start_end(post['post_link'], forum['text'], post['post_link']['link'],
+                                             search_start_index)]
+            if max(index_post_text) > -1:
+                search_start_index = max(index_post_text) + len(post['post_text']['text'])
         if search_start_index:
             write_to_json(forum['url'], args.result_directory, forum)
