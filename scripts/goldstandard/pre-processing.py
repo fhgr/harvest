@@ -3,11 +3,11 @@
 import argparse
 import gzip
 import logging
-import os
 
 from glob import glob
-from json import load, dump
+from json import load
 from inscriptis import get_text
+from inscriptis.model.config import ParserConfig
 from collections import defaultdict
 from harvest import posts
 from harvest.extract import extract_posts
@@ -37,7 +37,8 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
         logging.info("Processing " + forum['url'])
         postXPath = posts.extract_posts(forum)
         if postXPath['xpath_pattern']:
-            text = get_text(forum['html'], display_links=True)
+            config = ParserConfig(display_links=True, display_anchors=True)
+            text = get_text(forum['html'], config)
             text = " ".join([c.strip() for c in text.split("\n") if c.strip()])
             document = {"url": forum['url'], "html": forum['html'], "text": text, "gold_standard_annotation": []}
 
