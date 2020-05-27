@@ -56,10 +56,10 @@ for no, fname in enumerate(glob(args.pre_gold_document_path + "*.json")):
             continue
 
         logging.info("Remove unused links for " + forum['url'])
-        link_user = set(x['user']['user'] for x in forum['gold_standard_annotation'] if
-                        x['user'] and urlparse(x['user']['user']).netloc)
-        link_post = set(x['post_link']['link'] for x in forum['gold_standard_annotation'] if
-                        x['post_link'] and urlparse(x['post_link']['link']).netloc)
+        link_user = set(x['user']['surface_form'] for x in forum['gold_standard_annotation'] if
+                        'user' in x and urlparse(x['user']['surface_form']).netloc)
+        link_post = set(x['post_link']['surface_form'] for x in forum['gold_standard_annotation'] if
+                        'post_link' in x and urlparse(x['post_link']['surface_form']).netloc)
 
         forum['text'] = remove_unused_links(forum['text'], link_user.union(link_post))
         with open(fname, "w") as f2:

@@ -40,14 +40,16 @@ for no, fname in enumerate(glob(args.pre_gold_document_path + "*.json")):
         logging.info("Creating final gold standard document for " + forum['url'])
         search_start_index = 0
         for post in forum['gold_standard_annotation']:
-            index_post_text = [add_start_end(post['post_text'], forum['text'], post['post_text']['text'],
+            index_post_text = [add_start_end(post['post_text'], forum['text'], post['post_text']['surface_form'],
                                              search_start_index),
-                               add_start_end(post['datetime'], forum['text'], post['datetime']['datetime'],
+                               add_start_end(post['datetime'], forum['text'], post['datetime']['surface_form'],
                                              search_start_index),
-                               add_start_end(post['user'], forum['text'], post['user']['user'], search_start_index),
-                               add_start_end(post['post_link'], forum['text'], post['post_link']['link'],
+                               add_start_end(post['user'], forum['text'], post['user']['surface_form'],
                                              search_start_index)]
+            if 'post_link' in post:
+                index_post_text.append(add_start_end(post['post_link'], forum['text'],
+                                                     post['post_link']['surface_form'], search_start_index))
             if max(index_post_text) > -1:
-                search_start_index = max(index_post_text) + len(post['post_text']['text'])
+                search_start_index = max(index_post_text) + len(post['post_text']['surface_form'])
         if search_start_index:
             write_to_json(forum['url'], args.result_directory, forum)

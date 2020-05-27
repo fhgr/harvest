@@ -3,6 +3,7 @@
 import argparse
 import gzip
 import logging
+import hashlib
 
 from glob import glob
 from json import load
@@ -40,7 +41,8 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
             config = ParserConfig(display_links=True, display_anchors=True)
             text = get_text(forum['html'], config)
             text = " ".join([c.strip() for c in text.split("\n") if c.strip()])
-            document = {"url": forum['url'], "html": forum['html'], "text": text, "gold_standard_annotation": []}
+            document = {"id": f"i{int(hashlib.md5(forum['url'].encode('utf-8')).hexdigest(), 16)}",
+                        "url": forum['url'], "html": forum['html'], "text": text, "gold_standard_annotation": []}
 
             if args.result_directory:
                 for post in extract_posts(forum['html'], forum['url'],
@@ -48,11 +50,11 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
                                           postXPath['url_xpath_pattern'],
                                           postXPath['date_xpath_pattern'],
                                           postXPath['user_xpath_pattern'], result_as_datetime=False):
-                    post_element = {"post_text": {"text": post.post},
-                                    "datetime": {"datetime": post.date},
-                                    "user": {"user": post.user}}
+                    post_element = {"post_text": {"surface_form": post.post},
+                                    "datetime": {"surface_form": post.date},
+                                    "user": {"surface_form": post.user}}
                     if postXPath['url_xpath_pattern']:
-                        post_element["post_link"] = {"link": post.url}
+                        post_element["post_link"] = {"surface_form": post.url}
                     document["gold_standard_annotation"].append(post_element)
 
                 write_to_json(forum['url'], args.result_directory, document)
