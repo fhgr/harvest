@@ -1,5 +1,0 @@
-dateparser
-inscriptis
-lxml
-numpy
-requests

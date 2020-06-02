@@ -39,6 +39,7 @@ setup(
         'requests',
         'dateparser',
         'numpy',
-        'inscriptis'
+        'inscriptis',
+        'flask'
     ]
 )
