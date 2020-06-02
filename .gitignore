@@ -6,4 +6,3 @@ __pycache__/
 debug/
 venv
 results.json
-goldDocument*
