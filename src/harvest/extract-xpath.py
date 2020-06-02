@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-from dragnet import extract_content_and_comments, extract_comments
 from lxml import etree
-from glob import glob
-from json import load
 
-from sys import exit, argv
+from sys import argv
 import re
 
 
@@ -28,4 +25,3 @@ if __name__ == '__main__':
             print(element)
             text = extract_text(element)
             print(text)
-

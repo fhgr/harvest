@@ -30,12 +30,15 @@ setup(
 
     # Scripts
     scripts=[
-        'scripts/harvest-posts.py'
+        './src/harvest/main.py'
     ],
 
-#    # Requirements
-#    install_requires=[
-#        'lxml',
-#        'requests'
-#    ]
+    # Requirements
+    install_requires=[
+        'lxml',
+        'requests',
+        'dateparser',
+        'numpy',
+        'inscriptis'
+    ]
 )

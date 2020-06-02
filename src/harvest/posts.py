@@ -71,7 +71,7 @@ from harvest.utils import (get_xpath_expression, extract_text, get_html_dom,
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
-from dragnet import extract_content_and_comments, extract_comments
+# from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
 from lxml import etree
