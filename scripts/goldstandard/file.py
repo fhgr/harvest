@@ -17,5 +17,3 @@ def write_to_json(url, result_directory, document):
     if not os.path.isfile(result_fname):
         with open(result_fname, "w") as f2:
             dump(document, f2, indent=True)
-    else:
-        logging.warning(f'File {result_fname} already exists')
