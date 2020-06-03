@@ -109,7 +109,7 @@ def get_xpath_tree_text(dom, xpath):
        list -- A list of text obtained by all elements matching the given
        xpath.
     '''
-    return [extract_text(element) for element in dom.xpath(xpath)]
+    return [re.sub(r'\s\s+', ' ', extract_text(element)) for element in dom.xpath(xpath)]
 
 
 def get_cleaned_element_text(element):
