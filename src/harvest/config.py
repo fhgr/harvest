@@ -1,0 +1,1 @@
+LANGUAGES = ('en', 'de', 'es')

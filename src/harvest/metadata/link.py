@@ -5,11 +5,12 @@ link
 Tries to obtain the URL of the given post
 '''
 import logging
+import re
 
 from collections import defaultdict
 from urllib.parse import urlparse, urljoin
 
-from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter, get_merged_xpath
+from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter, get_merged_xpath, extract_text
 
 
 # strategy
@@ -17,12 +18,29 @@ from harvest.utils import get_xpath_expression, get_xpath_expression_child_filte
 # * consider decendndants as well as elements at the same level
 # * the number of URL candidates must be identical to the number of posts ;)
 
+def _get_link_representation(element):
+    if extract_text(element):
+        return extract_text(element)
+    elif 'href' in element.attrib:
+        return element.attrib['href']
+    return ''
+
+
+def _is_counting_up(candidates):
+    for xpath, matches in candidates.items():
+        post_ids = [re.search(r'\d+', _get_link_representation(x)) for x in matches['elements']]
+        if all(post_ids):
+            post_ids = [int(x.group(0)) for x in post_ids]
+            if all(x < y for x, y in zip(post_ids, post_ids[1:])):
+                matches['score'] += 1
+
+
 def get_link(dom, post_xpath, base_url, forum_posts):
     '''
     Obtains the URL to the given post.
     '''
     url_candidates = defaultdict(lambda: {'elements': [],
-                                          'has_anchor_tag': False})
+                                          'has_anchor_tag': False, 'score': 0})
 
     # post elements contains less elements than forum_posts (!)
     # since it takes the container with the posts
@@ -36,11 +54,12 @@ def get_link(dom, post_xpath, base_url, forum_posts):
                 xpath += get_xpath_expression_child_filter(tag)
                 # anchor tags with the name attribute will
                 # lead to the post
-                if 'name' in (attr.lower() for attr in tag.attrib):
+                attributes = list(attr.lower() for attr in tag.attrib)
+                if 'name' in attributes:
                     logging.info("Computed URL xpath for forum %s.", base_url)
                     url_candidates[xpath]['has_anchor_tag'] = True
-
-                url_candidates[xpath]['elements'].append(tag)
+                if 'name' in attributes or 'href' in attributes:
+                    url_candidates[xpath]['elements'].append(tag)
 
     # merge xpath
     for merged_xpath in get_merged_xpath(url_candidates.keys()):
@@ -76,11 +95,13 @@ def get_link(dom, post_xpath, base_url, forum_posts):
                 del url_candidates[xpath]
                 break
 
+    _is_counting_up(url_candidates)
+
     # obtain the most likely url path
     logging.info("%d rather than one URL candidate remaining. "
                  "Sorting candidates.", len(url_candidates))
     for xpath, _ in sorted(url_candidates.items(),
-                           key=lambda x: (x[1]['has_anchor_tag']),
+                           key=lambda x: (x[1]['has_anchor_tag'], x[1]['score']),
                            reverse=True):
         logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath
