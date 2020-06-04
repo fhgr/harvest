@@ -17,34 +17,35 @@ def events():
     forum = request.json
 
     # forum = json.load(data)
-    post = posts.extract_posts(forum)
+    post_0 = posts.extract_posts(forum)
+    # print(post_0)
 
     result = {'entities': {}}
-    for post in extract.extract_posts(
+    for post_1 in extract.extract_posts(
             forum['html'],
             forum['url'],
-            post['xpath_pattern'],
-            post['url_xpath_pattern'],
-            post['date_xpath_pattern'],
-            post['user_xpath_pattern']):
+            post_0['xpath_pattern'],
+            post_0['url_xpath_pattern'],
+            post_0['date_xpath_pattern'],
+            post_0['user_xpath_pattern']):
 
         post_dict = {
-            'user': post.user,
-            'date': post.date,
-            'url': post.url,
-            'post': post.post
+            'user': post_1.user,
+            'date': post_1.date,
+            'url': post_1.url,
+            'post': post_1.post
         }
 
         doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
 
-        result['entities'][doc_id] = []
+        result['entities'][doc_id] = result['entities'].get(doc_id, [])
         for item in ['user', 'date', 'url', 'post']:
             result['entities'][doc_id].append({
                 'doc_id': doc_id,
                 'type': item,
                 'surface_form': post_dict[item]
             })
-    print(f"Sending response: {result}")
+
     return jsonify(result)
 
 
