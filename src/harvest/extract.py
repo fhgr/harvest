@@ -26,7 +26,7 @@ ExtractionResult = namedtuple('ExtractionResult', ('post', 'url', 'date',
                                                    'user'))
 
 
-def _get_reference_url(url, element):
+def _get_reference_url(element):
     '''
     Returns either the URL to the given element (if the `name` attribute is
     set) or the URL the element points to (if the `href` attribute is present).
@@ -39,15 +39,15 @@ def _get_reference_url(url, element):
       is pointing to (href)
     '''
     if 'name' in element.attrib:
-        return urljoin(url, f"#{element.attrib['name']}")
+        return f"#{element.attrib['name']}"
 
     if 'href' in element.attrib:
-        return urljoin(url, f"{element.attrib['href']}")
+        return f"{element.attrib['href']}"
 
     return None
 
 
-def _get_user_name(url, element):
+def _get_user_name(element):
     '''
     Returns either the URL to the given element (if the `name` attribute is
     set) or the URL the element points to (if the `href` attribute is present) or the cleaned text.
@@ -60,7 +60,7 @@ def _get_user_name(url, element):
       is pointing to (href)
     '''
     if element.tag == 'a':
-        return _get_reference_url(url, element)
+        return _get_reference_url(element)
     else:
         return extract_text(element)
 
@@ -113,7 +113,7 @@ def get_forum_date(dom, post_date_xpath, result_as_datetime=True):
     return result
 
 
-def get_forum_url(dom, url, post_url_xpath):
+def get_forum_url(dom, post_url_xpath):
     '''
     Args:
       dom: The DOM representation of the forum page.
@@ -123,11 +123,11 @@ def get_forum_url(dom, url, post_url_xpath):
     Returns:
       list -- A list of all forum URLs.
     '''
-    return [_get_reference_url(url, element)
+    return [_get_reference_url(element)
             for element in dom.xpath(post_url_xpath)]
 
 
-def get_forum_user(dom, url, post_user_xpath):
+def get_forum_user(dom, post_user_xpath):
     '''
     Args:
       dom: The DOM representation of the forum page.
@@ -137,7 +137,7 @@ def get_forum_user(dom, url, post_user_xpath):
     Returns:
       list -- A list of all forum URLs.
     '''
-    return [_get_user_name(url, element)
+    return [_get_user_name(element)
             for element in dom.xpath(post_user_xpath)]
 
 
@@ -199,11 +199,11 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
     dom = get_html_dom(html_content)
 
     forum_posts = remove_boilerplate(get_xpath_tree_text(dom, post_xpath))
-    forum_urls = get_forum_url(dom, url, post_url_xpath) \
+    forum_urls = get_forum_url(dom, post_url_xpath) \
         if post_url_xpath else generate_forum_url(url, len(forum_posts))
     forum_dates = get_forum_date(dom, post_date_xpath, result_as_datetime=result_as_datetime) \
         if post_date_xpath else len(forum_posts) * ['']
-    forum_users = get_forum_user(dom, urlparse(url).scheme + '://' + urlparse(url).hostname, post_user_xpath) \
+    forum_users = get_forum_user(dom, post_user_xpath) \
         if post_user_xpath else len(forum_posts) * ['']
 
     add_anonymous_user(dom, forum_users, post_xpath, post_user_xpath)
