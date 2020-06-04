@@ -66,8 +66,8 @@
 from itertools import chain
 
 from harvest.cleanup.forum_post import remove_boilerplate
-from harvest.utils import (get_xpath_expression, extract_text, get_html_dom,
-                           get_xpath_tree_text, replace_xpath_last_class_with_and_condition)
+from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
+                           get_xpath_tree_text)
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
@@ -86,7 +86,7 @@ MATCH_PREFIX_SIZE = 30
 VSM_MODEL_SIZE = 5000
 
 # tags that are not allowed to be part of a forum xpath (lowercase)
-BLACKLIST_TAGS = ('option', 'footer', 'form', 'aside', 'head', 'tfoot')
+BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -117,7 +117,7 @@ def get_matching_element(comment, dom):
 
     for e in dom.iter():
         text = (e.text or "").strip()
-        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]):
+        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]) and e.tag is not etree.Comment:
             return e
 
     return None
@@ -213,7 +213,9 @@ def extract_posts(forum):
 
     if not candidate_xpaths:
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
-        return {'url': forum['url'], 'dragnet': None}
+        return {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
+                'xpath_score': None, 'forum_posts': None,
+                'date_xpath_pattern': None, 'user_xpath_pattern': None}
 
     # obtain anchor node
     candidate_xpaths.sort()
@@ -229,10 +231,22 @@ def extract_posts(forum):
         xpath_pattern = new_xpath_pattern
         xpath_score = new_xpath_score
 
+    # Check if combinations of classes result in detecting leading post
+    candidate_xpaths = []
+    for final_xpath in get_xpath_combinations_for_classes(xpath_pattern):
+        new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
+                                                               xpath=final_xpath, blacklisted_tags=BLACKLIST_TAGS)
+        if (xpath_element_count < new_xpath_element_count <= xpath_element_count + 2 or
+            xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
+            candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
+
+    if candidate_xpaths:
+        candidate_xpaths.sort()
+        xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
+
     logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern,
                  xpath_score)
     if xpath_pattern:
-        xpath_pattern = replace_xpath_last_class_with_and_condition(xpath_pattern)
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
 

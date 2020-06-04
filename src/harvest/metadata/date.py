@@ -8,57 +8,34 @@ import logging
 
 from collections import defaultdict
 from datetime import datetime
-from dateparser.search import search_dates
+from harvest.date_search import search_dates
 from dateutil import parser
+from lxml import etree
 
 from harvest.utils import (get_xpath_expression, get_cleaned_element_text, get_xpath_expression_child_filter,
                            get_merged_xpath)
 
-MAX_DATE_LEN = 64
-LANGUAGES = ('en', 'de', 'es')
+MAX_DATE_LEN = 120
 
 
-# strategy
-# --------
-# * obtain all xpaths that have date information
-#   - extract the one which contains most likely the date (otherwise no date-xpath is returned)
-
-# * extract all dates from the date-xpath
-# * select the one that
-#   - uses the same format and
-#   - are newer (!= join date)
-
-def get_date(dom, post_xpath, base_url, forum_posts):
-    '''
-    Args:
-        dom: The DOM tree to analyze.
-        post_xpath (str): xpath of the post to search dates.
-        base_url (str): URL of the forum.
-    Returns:
-        str: the xpath to the post date.
-    '''
+def _get_date(dom, post_elements, base_url, forum_posts):
     date_candidates = defaultdict(lambda: {'elements': [],
                                            'most_recent_date': datetime.fromtimestamp(0),  # 1970
                                            'lowermost_date': datetime.fromtimestamp(1E11),  # >5000
                                            'chronological_order': True,
                                            'same_size_posts': False,
                                            'multiple_dates': False})
-
-    # post elements contains less elements than forum_posts (!)
-    # since it takes the container with the posts
-    post_elements = dom.xpath(post_xpath + "/..")
-
     # collect candidate paths
     for element in post_elements:
         for tag in element.iterdescendants():
             text = get_cleaned_element_text(tag)
             # do not consider text larger than MAX_DATE_LEN relevant for date extraction
 
-            if len(text) > MAX_DATE_LEN or not search_dates(text, languages=LANGUAGES) and not (
-                    tag.tag == 'time' and 'datetime' in tag.attrib):
+            if (len(text) > MAX_DATE_LEN or not search_dates(text) or
+                    tag.tag is etree.Comment) and not (tag.tag == 'time' and 'datetime' in tag.attrib):
                 continue
 
-            xpath = get_xpath_expression(tag)
+            xpath = get_xpath_expression(tag, parent_element=element, single_class_filter=True)
             xpath += get_xpath_expression_child_filter(tag)
             date_candidates[xpath]['elements'].append(tag)
 
@@ -92,7 +69,7 @@ def get_date(dom, post_xpath, base_url, forum_posts):
                 time = match.attrib.get('datetime', '')
                 extracted_dates = [(time, parser.parse(time, ignoretz=True))]
             else:
-                extracted_dates = search_dates(get_cleaned_element_text(match), languages=LANGUAGES)
+                extracted_dates = search_dates(get_cleaned_element_text(match))
 
             if not extracted_dates:
                 del date_candidates[xpath]
@@ -123,9 +100,38 @@ def get_date(dom, post_xpath, base_url, forum_posts):
                      "Sorting candidates.", len(date_candidates))
     for xpath, _ in sorted(date_candidates.items(),
                            key=lambda x: (x[1]['same_size_posts'], x[1]['chronological_order'],
-                                          x[1]['most_recent_date'] - x[1]['lowermost_date']),
+                                          x[1]['most_recent_date']),
                            reverse=True):
         logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath
 
     return None
+
+
+# strategy
+# --------
+# * obtain all xpaths that have date information
+#   - extract the one which contains most likely the date (otherwise no date-xpath is returned)
+
+# * extract all dates from the date-xpath
+# * select the one that
+#   - uses the same format and
+#   - are newer (!= join date)
+
+def get_date(dom, post_xpath, base_url, forum_posts):
+    '''
+    Args:
+        dom: The DOM tree to analyze.
+        post_xpath (str): xpath of the post to search dates.
+        base_url (str): URL of the forum.
+    Returns:
+        str: the xpath to the post date.
+    '''
+
+    post_elements = dom.xpath(post_xpath)
+    while True:
+        result = _get_date(dom, post_elements, base_url, forum_posts)
+        if result or len(post_elements) <= 1:
+            return result
+        post_xpath = post_xpath + "/.."
+        post_elements = dom.xpath(post_xpath)
