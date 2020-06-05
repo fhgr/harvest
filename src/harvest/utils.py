@@ -36,7 +36,7 @@ def get_xpath_expression_child_filter(element):
     """
     child_filter = ""
     children = element.getchildren()
-    if len(children) == 1:
+    if len(children) == 1 and type(children[0].tag) == str:
         child_filter = "[" + children[0].tag + "]"
     elif element.text and element.text.strip() and not children:
         child_filter = "[not(*) and string-length(text()) > 0]"
