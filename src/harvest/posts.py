@@ -244,8 +244,8 @@ def extract_posts(forum):
         candidate_xpaths.sort()
         xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
 
-    logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern,
-                 xpath_score)
+    logging.info(
+        f"Obtained most likely forum xpath for forum {forum['url']}: {xpath_pattern} with a score of {xpath_score}.")
     if xpath_pattern:
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
@@ -270,5 +270,4 @@ def extract_posts(forum):
     user_xpath_pattern = get_user(dom, xpath_pattern, forum['url'], forum_posts)
     if user_xpath_pattern:
         result['user_xpath_pattern'] = user_xpath_pattern
-    print(">>>", user_xpath_pattern)
     return result

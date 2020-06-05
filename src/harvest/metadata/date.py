@@ -63,8 +63,6 @@ def _get_date(dom, post_elements, base_url, forum_posts):
     for xpath, matches in list(date_candidates.items()):
         previous_date = datetime.min
         for match in matches['elements']:
-            logging.info("Match attribs: %s of type %s.", match, type(match))
-
             if match.tag == 'time':
                 time = match.attrib.get('datetime', '')
                 extracted_dates = [(time, parser.parse(time, ignoretz=True))]
@@ -95,14 +93,10 @@ def _get_date(dom, post_elements, base_url, forum_posts):
             previous_date = date_candidates[xpath]['most_recent_date']
 
     # obtain the most likely url path
-    if len(date_candidates) > 1:
-        logging.info("%d rather than one URL candidate remaining. "
-                     "Sorting candidates.", len(date_candidates))
     for xpath, _ in sorted(date_candidates.items(),
                            key=lambda x: (x[1]['same_size_posts'], x[1]['chronological_order'],
                                           x[1]['most_recent_date']),
                            reverse=True):
-        logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath
 
     return None
@@ -127,11 +121,12 @@ def get_date(dom, post_xpath, base_url, forum_posts):
     Returns:
         str: the xpath to the post date.
     '''
-
+    logging.info('Start finding post date')
     post_elements = dom.xpath(post_xpath)
     while True:
         result = _get_date(dom, post_elements, base_url, forum_posts)
         if result or len(post_elements) <= 1:
+            logging.info(f'Post date xpath: {result}')
             return result
         post_xpath = post_xpath + "/.."
         post_elements = dom.xpath(post_xpath)

@@ -115,7 +115,6 @@ def _filter_url_other_domain(url_candidates, base_url):
     forum_url = urlparse(base_url)
     for xpath, matches in [x for x in url_candidates.items() if x[1]['is_link']]:
         for match in matches['elements']:
-            logging.info("Match attribs: %s of type %s.", match, type(match))
             parsed_url = urlparse(urljoin(base_url, match.attrib.get('href', '')))
             if parsed_url.netloc and parsed_url.netloc != forum_url.netloc or parsed_url.path == forum_url.path:
                 del url_candidates[xpath]
@@ -197,12 +196,9 @@ def _get_user(dom, post_elements, base_url, posts):
     _filter_post_to_candidate_length(url_candidates, posts)
 
     # obtain the most likely url path
-    logging.info("%d rather than one URL candidate remaining. "
-                 "Sorting candidates.", len(url_candidates))
 
     for xpath, _ in sorted(url_candidates.items(),
                            key=lambda x: (x[1]['is_link'], x[1]['score'], len(x[1]['elements'])), reverse=True):
-        logging.info("Computed URL xpath for forum %s.", base_url)
         return xpath
 
     return None
@@ -227,11 +223,12 @@ def get_user(dom, post_xpath, base_url, posts):
         - base url: URL of the given forum
         - posts: the extracted posts
     """
-
+    logging.info('Start finding user name')
     post_elements = dom.xpath(post_xpath)
     while True:
         result = _get_user(dom, post_elements, base_url, posts)
         if result or len(post_elements) <= 1:
+            logging.info(f'User name xpath: {result}')
             return result
         post_xpath = post_xpath + "/.."
         post_elements = dom.xpath(post_xpath)

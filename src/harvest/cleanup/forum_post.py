@@ -4,6 +4,7 @@
 Removes common suffixes and suffixes from forum posts.
 '''
 
+import logging
 
 def compute_common_suffix_count(post_list):
     '''
@@ -63,7 +64,7 @@ def remove_boilerplate(post_list):
     '''
     prefix_count = compute_common_prefix_count(post_list)
     suffix_count = compute_common_suffix_count(post_list)
-    print(prefix_count, ">>", suffix_count)
+    logging.info(f'{prefix_count}>>{suffix_count}')
     if prefix_count == 0 and suffix_count == 0:
         return post_list
     suffix_count = -suffix_count if suffix_count != 0 else None

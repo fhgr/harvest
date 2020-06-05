@@ -208,7 +208,6 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
 
     add_anonymous_user(dom, forum_users, post_xpath, post_user_xpath)
     forum_urls = get_same_number_of_url_as_posts(len(forum_posts), forum_urls)
-    print("****", forum_users)
 
     return [ExtractionResult(post, url, date, user)
             for post, url, date, user in zip(forum_posts, forum_urls,
