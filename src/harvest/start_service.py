@@ -1,11 +1,11 @@
 from flask import Flask
 from flask import request
 from flask import jsonify
-import json
 import hashlib
 
 import posts
 import extract
+from harvest.evaluation.dragnet import get_posts
 
 
 app = Flask('harvest')
@@ -45,6 +45,25 @@ def events():
                 'type': item,
                 'surface_form': post_dict[item]
             })
+
+    return jsonify(result)
+
+
+@app.route('/dragnet_extract_from_html', methods=['POST'])
+def events_dragnet():
+    forum = request.json
+
+    posts = get_posts(forum['html'])
+    doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
+
+    result = {'entities': {}}
+    result['entities'][doc_id] = result['entities'].get(doc_id, [])
+    for post in posts:
+        result['entities'][doc_id].append({
+            'doc_id': doc_id,
+            'type': 'post',
+            'surface_form': post
+        })
 
     return jsonify(result)
 
