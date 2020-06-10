@@ -75,6 +75,7 @@ from inscriptis import get_text
 
 from lxml import etree
 import logging
+import re
 import numpy as np
 
 # CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
@@ -87,6 +88,7 @@ VSM_MODEL_SIZE = 5000
 # tags that are not allowed to be part of a forum xpath (lowercase)
 BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
 BLACKLIST_POST_TEXT_TAG = ('h1', 'h2', 'h3', 'h4', 'h5', 'a')
+REWARDED_CLASSES = ('content', 'message')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -151,7 +153,15 @@ def ancestors_contains_blacklisted_tag(xpath_string, blacklisted_tags):
     return False
 
 
-def assess_node(reference_content, dom, xpath, blacklisted_tags):
+def ancestors_contains_class(xpath, rewarded_classes):
+    classes_x_path = re.findall(r"(?!.*\[)@class=\".*\"", xpath)
+    if classes_x_path:
+        classes = [x.lower() for x in list(filter(None, re.sub(r"@class=|\"", "", classes_x_path[-1]).split(" ")))]
+        if any(elem in rewarded_classes for elem in classes):
+            return True
+
+
+def assess_node(reference_content, dom, xpath, blacklisted_tags, rewarded_classes=[]):
     '''
     returns
     -------
@@ -180,7 +190,9 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
     # discount any node that contains BLACKLIST_TAGS
     if ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
         similarity /= 10
-    return (similarity, xpath_element_count)
+    elif ancestors_contains_class(xpath, rewarded_classes):
+        similarity += 0.1
+    return similarity, xpath_element_count
 
 
 def extract_posts(forum):
@@ -210,7 +222,8 @@ def extract_posts(forum):
             xpath_pattern = get_xpath_expression(element)
 
             xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
-                                                           xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
+                                                           xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS,
+                                                           rewarded_classes=REWARDED_CLASSES)
             if xpath_element_count > 1:
                 candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
