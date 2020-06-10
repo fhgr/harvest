@@ -71,7 +71,6 @@ from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combina
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
-from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
 from lxml import etree
@@ -87,6 +86,7 @@ VSM_MODEL_SIZE = 5000
 
 # tags that are not allowed to be part of a forum xpath (lowercase)
 BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
+BLACKLIST_POST_TEXT_TAG = ('h1', 'h2', 'h3', 'h4', 'h5', 'a')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -117,7 +117,9 @@ def get_matching_element(comment, dom):
 
     for e in dom.iter():
         text = (e.text or "").strip()
-        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]) and e.tag is not etree.Comment:
+        min_length_of_text = len(comment[:MATCH_PREFIX_SIZE])
+        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]) and len(text) >= min_length_of_text and \
+                e.tag is not etree.Comment:
             return e
 
     return None
@@ -204,12 +206,13 @@ def extract_posts(forum):
         if not xpath:
             continue
         element = get_matching_element(comment, dom)
-        xpath_pattern = get_xpath_expression(element)
+        if element.tag not in BLACKLIST_POST_TEXT_TAG:
+            xpath_pattern = get_xpath_expression(element)
 
-        xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
-                                                       xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
-        if xpath_element_count > 1:
-            candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
+            xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
+                                                           xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
+            if xpath_element_count > 1:
+                candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
     if not candidate_xpaths:
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
