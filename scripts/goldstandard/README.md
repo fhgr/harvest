@@ -25,4 +25,4 @@ The elements that are not correctly recognized should be corrected or supplement
 6. Now run the script `python3 final-processing.py ./goldDocumentsPre/ --result-directory ./goldDocumentsFinal/`. If all elements are prepared correctly, a start and end position is found for each element. If this is not the case, the log will show the message "Not found in text". If start and end positions are not found, correct the pre document accordingly and generate the final document again.
 7. With git commit and push to repository.
 
-**Note**: the `final-processing.py` and `pre-processing.py` scripts do not overwrite existing documents. If, for example, a final document has to be created again, the previous one must be deleted first.
+**Note**: the `final-processing.py` and `pre-processing.py` scripts do not overwrite existing documents.
