@@ -68,7 +68,7 @@ def events_dragnet():
     for post in posts:
         result['entities'][doc_id].append({
             'doc_id': doc_id,
-            'type': 'post',
+            'type': 'post_text',
             'surface_form': post
         })
 
