@@ -76,8 +76,7 @@ def _get_link(dom, post_elements, base_url, forum_posts):
     for xpath, matches in list(url_candidates.items()):
         current_url_path = ''
         for match in matches['elements']:
-            parsed_url = urlparse(urljoin(base_url,
-                                          match.attrib.get('href', '')))
+            parsed_url = urlparse(urljoin(forum_url.scheme + "://" + forum_url.netloc, match.attrib.get('href', '')))
             if parsed_url.netloc != forum_url.netloc:
                 del url_candidates[xpath]
                 break
@@ -85,7 +84,7 @@ def _get_link(dom, post_elements, base_url, forum_posts):
             if not current_url_path:
                 current_url_path = parsed_url.path
 
-            if parsed_url.path != forum_url.path or parsed_url.path != current_url_path:
+            if parsed_url.path not in forum_url.path or parsed_url.path not in current_url_path:
                 del url_candidates[xpath]
                 break
 
