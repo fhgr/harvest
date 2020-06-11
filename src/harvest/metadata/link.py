@@ -18,6 +18,24 @@ from harvest.utils import get_xpath_expression, get_xpath_expression_child_filte
 # * consider decendndants as well as elements at the same level
 # * the number of URL candidates must be identical to the number of posts ;)
 
+def _get_without_post_link(path):
+    """
+    Used to handle case cases like post link /threads/deviantart-horrors.2366/post-145153 with forum link
+    /threads/deviantart-horrors.2366
+    Args:
+        path:
+
+    Returns:
+
+    """
+    path_elements = path.split('/')
+    if len([x for x in path_elements if x.strip() != '']) > 2:
+        new_path = "/".join(path_elements[:-1])
+        return new_path
+
+    return path
+
+
 def _get_link_representation(element):
     if extract_text(element):
         return extract_text(element)
@@ -74,17 +92,13 @@ def _get_link(dom, post_elements, base_url, forum_posts):
     # record the urls' targets
     forum_url = urlparse(base_url)
     for xpath, matches in list(url_candidates.items()):
-        current_url_path = ''
         for match in matches['elements']:
             parsed_url = urlparse(urljoin(forum_url.scheme + "://" + forum_url.netloc, match.attrib.get('href', '')))
             if parsed_url.netloc != forum_url.netloc:
                 del url_candidates[xpath]
                 break
 
-            if not current_url_path:
-                current_url_path = parsed_url.path
-
-            if parsed_url.path not in forum_url.path or parsed_url.path not in current_url_path:
+            if _get_without_post_link(parsed_url.path) not in forum_url.path:
                 del url_candidates[xpath]
                 break
 
