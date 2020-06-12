@@ -71,11 +71,11 @@ from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combina
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
-# from dragnet import extract_content_and_comments, extract_comments
 from inscriptis import get_text
 
 from lxml import etree
 import logging
+import re
 import numpy as np
 
 # CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
@@ -87,6 +87,8 @@ VSM_MODEL_SIZE = 5000
 
 # tags that are not allowed to be part of a forum xpath (lowercase)
 BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
+BLACKLIST_POST_TEXT_TAG = ('h1', 'h2', 'h3', 'h4', 'h5', 'a')
+REWARDED_CLASSES = ('content', 'message')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -117,7 +119,9 @@ def get_matching_element(comment, dom):
 
     for e in dom.iter():
         text = (e.text or "").strip()
-        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]) and e.tag is not etree.Comment:
+        min_length_of_text = len(comment[:MATCH_PREFIX_SIZE])
+        if text and comment.startswith(text[:MATCH_PREFIX_SIZE]) and len(text) >= min_length_of_text and \
+                e.tag is not etree.Comment:
             return e
 
     return None
@@ -149,7 +153,17 @@ def ancestors_contains_blacklisted_tag(xpath_string, blacklisted_tags):
     return False
 
 
-def assess_node(reference_content, dom, xpath, blacklisted_tags):
+def ancestors_contains_class(xpath, rewarded_classes):
+    classes_x_path = re.findall(r"(?!.*\[)@class=\".*\"", xpath)
+    if classes_x_path:
+        classes = [x.lower() for x in list(filter(None, re.sub(r"@class=|\"", "", classes_x_path[-1]).split(" ")))]
+        for html_class in classes:
+            for rewarded_class in rewarded_classes:
+                if rewarded_class in html_class:
+                    return True
+
+
+def assess_node(reference_content, dom, xpath, blacklisted_tags, rewarded_classes=[]):
     '''
     returns
     -------
@@ -178,7 +192,9 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags):
     # discount any node that contains BLACKLIST_TAGS
     if ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
         similarity /= 10
-    return (similarity, xpath_element_count)
+    elif ancestors_contains_class(xpath, rewarded_classes):
+        similarity += 0.1
+    return similarity, xpath_element_count
 
 
 def extract_posts(forum):
@@ -204,12 +220,14 @@ def extract_posts(forum):
         if not xpath:
             continue
         element = get_matching_element(comment, dom)
-        xpath_pattern = get_xpath_expression(element)
+        if element.tag not in BLACKLIST_POST_TEXT_TAG:
+            xpath_pattern = get_xpath_expression(element)
 
-        xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
-                                                       xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
-        if xpath_element_count > 1:
-            candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
+            xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
+                                                           xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS,
+                                                           rewarded_classes=REWARDED_CLASSES)
+            if xpath_element_count > 1:
+                candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
     if not candidate_xpaths:
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
@@ -244,8 +262,8 @@ def extract_posts(forum):
         candidate_xpaths.sort()
         xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
 
-    logging.info("Obtained most likely forum xpath for forum %s: %s with a score of %s.", forum['url'], xpath_pattern,
-                 xpath_score)
+    logging.info(
+        f"Obtained most likely forum xpath for forum {forum['url']}: {xpath_pattern} with a score of {xpath_score}.")
     if xpath_pattern:
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
@@ -270,5 +288,4 @@ def extract_posts(forum):
     user_xpath_pattern = get_user(dom, xpath_pattern, forum['url'], forum_posts)
     if user_xpath_pattern:
         result['user_xpath_pattern'] = user_xpath_pattern
-    print(">>>", user_xpath_pattern)
     return result
