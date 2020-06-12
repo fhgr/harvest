@@ -80,6 +80,9 @@ def get_xpath_expression(element, parent_element=None, single_class_filter=False
         xpath_expression = _get_xpath_element_expression(element, without_class_filter=without_class_filter)
         if not has_class_filter and "[" in xpath_expression:
             has_class_filter = True
+        # Todo does this improve the detection overall?
+        #if not has_class_filter:
+        #    xpath_expression = xpath_expression + "[not(@class)]"
         xpath_list.append(xpath_expression)
 
         element = element.getparent()
