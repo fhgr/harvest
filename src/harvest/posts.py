@@ -157,8 +157,10 @@ def ancestors_contains_class(xpath, rewarded_classes):
     classes_x_path = re.findall(r"(?!.*\[)@class=\".*\"", xpath)
     if classes_x_path:
         classes = [x.lower() for x in list(filter(None, re.sub(r"@class=|\"", "", classes_x_path[-1]).split(" ")))]
-        if any(elem in rewarded_classes for elem in classes):
-            return True
+        for html_class in classes:
+            for rewarded_class in rewarded_classes:
+                if rewarded_class in html_class:
+                    return True
 
 
 def assess_node(reference_content, dom, xpath, blacklisted_tags, rewarded_classes=[]):
