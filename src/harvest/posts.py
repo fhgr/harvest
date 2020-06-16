@@ -71,6 +71,7 @@ from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combina
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
+from harvest.metadata.usertext import get_text_xpath_pattern
 from inscriptis import get_text
 
 from lxml import etree
@@ -88,7 +89,7 @@ VSM_MODEL_SIZE = 5000
 # tags that are not allowed to be part of a forum xpath (lowercase)
 BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
 BLACKLIST_POST_TEXT_TAG = ('h1', 'h2', 'h3', 'h4', 'h5', 'a')
-REWARDED_CLASSES = ('content', 'message')
+REWARDED_CLASSES = ('content', 'message', 'post')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
@@ -193,8 +194,23 @@ def assess_node(reference_content, dom, xpath, blacklisted_tags, rewarded_classe
     if ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
         similarity /= 10
     elif ancestors_contains_class(xpath, rewarded_classes):
-        similarity += 0.1
+        similarity += 0.3
     return similarity, xpath_element_count
+
+
+def _remove_trailing_p_element(xpath):
+    """
+    The p elements at the end can be removed. Some posts have several p elements and some have none at all.
+    Those without p element can then not be detected. As Example, leading post can not be detected:
+    https://us.forums.blizzard.com/en/wow/t/layers-and-character-creation-adjustments-on-select-realms/499760
+
+    Args:
+        xpath: the xpath to remove the p element from
+
+    Returns:
+
+    """
+    return re.sub(r'(?<!([\/]))\/p$', '', xpath)
 
 
 def extract_posts(forum):
@@ -222,6 +238,7 @@ def extract_posts(forum):
         element = get_matching_element(comment, dom)
         if element.tag not in BLACKLIST_POST_TEXT_TAG:
             xpath_pattern = get_xpath_expression(element)
+            xpath_pattern = _remove_trailing_p_element(xpath_pattern)
 
             xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
                                                            xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS,
@@ -233,7 +250,7 @@ def extract_posts(forum):
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
         return {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
                 'xpath_score': None, 'forum_posts': None,
-                'date_xpath_pattern': None, 'user_xpath_pattern': None}
+                'date_xpath_pattern': None, 'user_xpath_pattern': None, 'text_xpath_pattern': None}
 
     # obtain anchor node
     candidate_xpaths.sort()
@@ -271,7 +288,10 @@ def extract_posts(forum):
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern,
               'xpath_score': xpath_score, 'forum_posts': forum_posts,
               'dragnet': None, 'url_xpath_pattern': None,
-              'date_xpath_pattern': None, 'user_xpath_pattern': None}
+              'date_xpath_pattern': None, 'user_xpath_pattern': None, 'text_xpath_pattern': None}
+
+    if xpath_pattern:
+        result['text_xpath_pattern'] = get_text_xpath_pattern(dom, xpath_pattern, forum_posts)
 
     # add the post URL
     url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'], forum_posts)
@@ -279,8 +299,7 @@ def extract_posts(forum):
         result['url_xpath_pattern'] = url_xpath_pattern
 
     # add the post Date
-    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'],
-                                  forum_posts)
+    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'], forum_posts)
     if date_xpath_pattern:
         result['date_xpath_pattern'] = date_xpath_pattern
 

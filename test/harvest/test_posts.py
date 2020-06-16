@@ -61,7 +61,7 @@ def test_extract_posts_forum_healthunlocked(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://healthunlocked.com/parkinsonsmovement/posts/142058845/artane-anyone'
-    assert post['xpath_pattern'] == '//div[@class="response-text-content text-content"]/span/p/../../..'
+    assert post['xpath_pattern'] == '//div[@class="response-text-content text-content"]/span/../..'
     assert post['url_xpath_pattern'] == \
            '//div[@class="post-media-info__action"]/a[not(*) and string-length(text()) > 0]'
     assert post['date_xpath_pattern'] == '//div/div/div/time[@class=""][not(*) and string-length(text()) > 0]'
@@ -88,7 +88,7 @@ def test_extract_posts_forum_shift_ms(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://shift.ms/topic/cbd-oil-11'
-    assert post['xpath_pattern'] == '//div[@class="bbp-reply-content"]/p/../../..'
+    assert post['xpath_pattern'] == '//div[@class="bbp-reply-content"]/../..'
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == '//div/div/div[@class="bbp-reply-date"][not(*) and string-length(text()) > 0]'
     assert post['user_xpath_pattern'] == \
@@ -186,7 +186,7 @@ def test_extract_posts_forum_mumsnet(load_test_data):
 
     assert post['url'] == \
            'https://www.mumsnet.com/Talk/pregnancy/3749275-Pregnant-with-a-black-mixed-race-with-black-baby'
-    assert post['xpath_pattern'] == "//div[contains(concat(' ',@class,' '),' talk-post ')]/p/../.."
+    assert post['xpath_pattern'] == "//div[contains(concat(' ',@class,' '),' talk-post ')]/.."
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] == \
            '//div/span[@class="post_time"][not(*) and string-length(text()) > 0]'
@@ -198,7 +198,7 @@ def test_extract_posts_forum_uninterrupted(load_test_data):
     post = extract_posts(forum_test_data)
 
     assert post['url'] == 'https://www.uninterrupted.org.au/blog-category/my-ms-journey'
-    assert post['xpath_pattern'] == '//div[@class="field-content"]/p/../../..'
+    assert post['xpath_pattern'] == '//div[@class="field-content"]/../..'
     assert post['url_xpath_pattern'] is None
     assert post['date_xpath_pattern'] is None
     assert post['user_xpath_pattern'] == '//div/span/a[@class="username"][not(*) and string-length(text()) > 0]'
