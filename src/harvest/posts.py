@@ -71,6 +71,7 @@ from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combina
 from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
+from harvest.metadata.usertext import get_text_xpath_pattern
 from inscriptis import get_text
 
 from lxml import etree
@@ -233,7 +234,7 @@ def extract_posts(forum):
         logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
         return {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
                 'xpath_score': None, 'forum_posts': None,
-                'date_xpath_pattern': None, 'user_xpath_pattern': None}
+                'date_xpath_pattern': None, 'user_xpath_pattern': None, 'text_xpath_pattern': None}
 
     # obtain anchor node
     candidate_xpaths.sort()
@@ -271,7 +272,10 @@ def extract_posts(forum):
     result = {'url': forum['url'], 'xpath_pattern': xpath_pattern,
               'xpath_score': xpath_score, 'forum_posts': forum_posts,
               'dragnet': None, 'url_xpath_pattern': None,
-              'date_xpath_pattern': None, 'user_xpath_pattern': None}
+              'date_xpath_pattern': None, 'user_xpath_pattern': None, 'text_xpath_pattern': None}
+
+    if xpath_pattern:
+        result['text_xpath_pattern'] = get_text_xpath_pattern(dom, xpath_pattern, forum_posts)
 
     # add the post URL
     url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'], forum_posts)
@@ -279,8 +283,7 @@ def extract_posts(forum):
         result['url_xpath_pattern'] = url_xpath_pattern
 
     # add the post Date
-    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'],
-                                  forum_posts)
+    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'], forum_posts)
     if date_xpath_pattern:
         result['date_xpath_pattern'] = date_xpath_pattern
 

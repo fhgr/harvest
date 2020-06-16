@@ -46,7 +46,7 @@ for no, fname in enumerate(glob(args.corpus_path + "*.json.gz")):
 
             if args.result_directory:
                 for post in extract_posts(forum['html'], forum['url'],
-                                          postXPath['xpath_pattern'],
+                                          postXPath['text_xpath_pattern'],
                                           postXPath['url_xpath_pattern'],
                                           postXPath['date_xpath_pattern'],
                                           postXPath['user_xpath_pattern'], result_as_datetime=False):
