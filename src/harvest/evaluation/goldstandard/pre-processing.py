@@ -14,7 +14,7 @@ from harvest import posts
 from harvest.extract import extract_posts
 from urllib.parse import urlparse
 
-from scripts.goldstandard.file import write_to_json
+from harvest.evaluation.goldstandard.file import write_to_json
 
 logging.getLogger().setLevel(logging.INFO)
 

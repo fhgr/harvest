@@ -7,7 +7,7 @@ import os
 from glob import glob
 from json import load
 from collections import defaultdict
-from scripts.goldstandard.file import write_to_json, get_file_path
+from harvest.evaluation.goldstandard.file import write_to_json, get_file_path
 
 logging.getLogger().setLevel(logging.INFO)
 

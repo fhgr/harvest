@@ -7,7 +7,6 @@ import re
 from glob import glob
 from json import load, dump
 from collections import defaultdict
-from urllib.parse import urlparse
 
 logging.getLogger().setLevel(logging.INFO)
 
