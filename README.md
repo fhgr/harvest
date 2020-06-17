@@ -3,5 +3,5 @@
 Example call:
 
 ```bash
-clear; python3 ./scripts/harvest-posts.py ./data/forum/ ./results.json --result-directory ./debug/  --corpus-include-string msworld
+clear; python3 ./src/harvest/main.py ./data/forum/ ./results.json --result-directory ./debug/  --corpus-include-string msworld
 ```
