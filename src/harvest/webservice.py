@@ -22,7 +22,7 @@ def events():
     for post_1 in extract.extract_posts(
             forum['html'],
             forum['url'],
-            post_0['xpath_pattern'],
+            post_0['text_xpath_pattern'],
             post_0['url_xpath_pattern'],
             post_0['date_xpath_pattern'],
             post_0['user_xpath_pattern']):
