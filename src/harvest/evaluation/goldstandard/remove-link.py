@@ -11,16 +11,6 @@ from collections import defaultdict
 logging.getLogger().setLevel(logging.INFO)
 
 
-def add_start_end(element_to_add, text, sub_text, start_index):
-    start_index = text.find(sub_text, start_index)
-    if start_index > -1:
-        element_to_add['start'] = start_index
-        element_to_add['end'] = start_index + len(sub_text)
-    else:
-        logging.warning(f'Not found in text:\n{sub_text}')
-    return start_index
-
-
 def remove_unused_links(text, links_to_keep):
     pattern = re.compile(r'( \* )?\[[^\]]*\]\((http(s)?:\/)?\/[^\)]*\)')
     start_index = 0
