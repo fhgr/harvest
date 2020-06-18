@@ -3,14 +3,15 @@ import json
 
 
 def query():
-    service_url = 'http://localhost:5000/dragnet_extract_from_html'
+    service_url = 'http://localhost:5000/extract_from_html'
 
     with open('./goldDocumentsFinal/blog.angelman-asa.org.read.php.json') as gold_document:
         data = json.load(gold_document)
         test_url = data['url']
         test_html = data['html']
+        test_text = data['text']
 
-        data = {'url': test_url, 'html': test_html}
+        data = {'url': test_url, 'html': test_html, 'text': test_text}
 
         try:
             response = requests.post(service_url, json=data)
