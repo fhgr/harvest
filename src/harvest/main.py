@@ -35,7 +35,6 @@ def main():
         opener = gzip.open if fname.endswith(".gz") else open
         with opener(fname) as f:
             forum = load(f)
-            # print(forum)
             domain = urlparse(forum['url']).netloc
             if args.corpus_include_string and args.corpus_include_string not in forum['url']:
                 continue
@@ -46,19 +45,19 @@ def main():
                     g.write(forum['html'])
 
             logging.info("Processing " + forum['url'])
-            post = posts.extract_posts(forum)
-            result[domain].append(post)
+            extract_post_result = posts.extract_posts(forum)
+            result[domain].append(extract_post_result)
 
-            if args.result_directory:
+            if args.result_directory and extract_post_result['text_xpath_pattern']:
                 result_fname = os.path.join(args.result_directory, f'{domain}.csv')
                 with open(result_fname, 'w') as g:
                     csvwriter = writer(g)
                     csvwriter.writerow(['user', 'date', 'url', 'post'])
                     for post in extract_posts(forum['html'], forum['url'],
-                                              post['xpath_pattern'],
-                                              post['url_xpath_pattern'],
-                                              post['date_xpath_pattern'],
-                                              post['user_xpath_pattern']):
+                                              extract_post_result['text_xpath_pattern'],
+                                              extract_post_result['url_xpath_pattern'],
+                                              extract_post_result['date_xpath_pattern'],
+                                              extract_post_result['user_xpath_pattern']):
                         csvwriter.writerow([post.user, post.date, post.url,
                                             post.post])
 

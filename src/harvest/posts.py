@@ -88,12 +88,12 @@ BLACKLIST_POST_TEXT_TAG = ('h1', 'h2', 'h3', 'h4', 'h5', 'a')
 MIN_POST_COUNT = 3
 
 
-def get_matching_element(comment, dom):
-    '''
+def _get_matching_element(comment, dom):
+    """
     returns
     -------
     the element that matches the given comment
-    '''
+    """
     if not comment.strip():
         return None
 
@@ -107,8 +107,8 @@ def get_matching_element(comment, dom):
     return None
 
 
-def get_xpath_tree(comment, dom, tree):
-    element = get_matching_element(comment, dom)
+def _get_xpath_tree(comment, dom, tree):
+    element = _get_matching_element(comment, dom)
     return (None, None) if element is None else (element, tree.getpath(element))
 
 
@@ -127,61 +127,67 @@ def _remove_trailing_p_element(xpath):
     return re.sub(r'(?<!([\/]))\/p$', '', xpath)
 
 
-def extract_posts(forum):
-    dom = get_html_dom(forum['html'])
-    tree = etree.ElementTree(dom)
-
-    comments = []
-    # remove blacklisted items
-    content_comments = get_text(forum['html'])
-    for comment in (c for c in content_comments.split("\n") if c.strip()):
+def _get_cleaned_text(html):
+    text_sections = []
+    text = get_text(html)
+    # remove sections after copyright found in text
+    for comment in (c for c in text.split("\n") if c.strip()):
         if 'copyright' not in comment.lower():
-            comments.append(comment.strip())
+            text_sections.append(comment.strip())
         else:
             break
-    reference_content = " ".join(comments)
+    return text_sections
 
+
+def _get_xpaths_candidates(text_sections, dom, tree, reference_text):
     candidate_xpaths = []
-    logging.debug("Extracted %d lines of comments.", len(comments))
-    for comment in comments:
-        element, xpath = get_xpath_tree(comment, dom, tree)
-        logging.debug("Processing commment '%s' with xpath '%s'.", comment, xpath)
+    for section_text in text_sections:
+        element, xpath = _get_xpath_tree(section_text, dom, tree)
+        logging.debug(f"Processing section of text '{section_text}' with xpath '{xpath}'.")
         if not xpath:
             continue
-        element = get_matching_element(comment, dom)
+        element = _get_matching_element(section_text, dom)
         if element.tag not in BLACKLIST_POST_TEXT_TAG:
             xpath_pattern = get_xpath_expression(element)
             xpath_pattern = _remove_trailing_p_element(xpath_pattern)
 
-            xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
+            xpath_score, xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
                                                            xpath=xpath_pattern, reward_classes=True)
             if xpath_element_count > 1:
                 candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
-    if not candidate_xpaths:
-        logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
-        return {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
-                'xpath_score': None, 'forum_posts': None,
-                'date_xpath_pattern': None, 'user_xpath_pattern': None, 'text_xpath_pattern': None}
+    return candidate_xpaths
 
-    # obtain anchor node
-    candidate_xpaths.sort()
-    xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
 
+def _get_entire_post(xpath_pattern, xpath_score, reference_text, dom):
     while True:
         new_xpath_pattern = xpath_pattern + "/.."
-        new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom,
+        new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
                                                                xpath=new_xpath_pattern)
-        if new_xpath_element_count < MIN_POST_COUNT:  #
-            break
+        if new_xpath_element_count < MIN_POST_COUNT:
+            return xpath_pattern, xpath_score
 
         xpath_pattern = new_xpath_pattern
         xpath_score = new_xpath_score
 
-    # Check if combinations of classes result in detecting leading post
+
+def _get_combination_of_posts(xpath_pattern, xpath_score, xpath_element_count, reference_text, dom):
+    """
+    Check if combinations of classes result in detecting leading post
+    Args:
+        xpath_pattern:
+        xpath_score:
+        xpath_element_count:
+        reference_text:
+        dom:
+
+    Returns:
+    Combination of classes if they resulting in a better score. Otherwise the parameters xpath_patter, xpath_score and
+    xpath_element_count are returned.
+    """
     candidate_xpaths = []
     for final_xpath in get_xpath_combinations_for_classes(xpath_pattern):
-        new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
+        new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
                                                                xpath=final_xpath)
         if (xpath_element_count < new_xpath_element_count <= xpath_element_count + 2 or
             xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
@@ -189,7 +195,36 @@ def extract_posts(forum):
 
     if candidate_xpaths:
         candidate_xpaths.sort()
-        xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
+        return candidate_xpaths.pop()
+    return xpath_score, xpath_element_count, xpath_pattern
+
+
+def extract_posts(forum):
+    dom = get_html_dom(forum['html'])
+    tree = etree.ElementTree(dom)
+    result = {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
+               'xpath_score': None, 'forum_posts': None, 'date_xpath_pattern': None, 'user_xpath_pattern': None,
+               'text_xpath_pattern': None}
+
+    text_sections = _get_cleaned_text(forum['html'])
+    logging.debug(f"Extracted {len(text_sections)} lines of comments.")
+    reference_text = " ".join(text_sections)
+
+    candidate_xpaths = _get_xpaths_candidates(text_sections, dom, tree, reference_text)
+
+    if not candidate_xpaths:
+        logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
+        return result
+
+    # obtain anchor node
+    candidate_xpaths.sort()
+    xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
+
+    xpath_pattern, xpath_score = _get_entire_post(xpath_pattern, xpath_score, reference_text, dom)
+
+    xpath_score, xpath_element_count, xpath_pattern = _get_combination_of_posts(xpath_pattern, xpath_score,
+                                                                                xpath_element_count, reference_text,
+                                                                                dom)
 
     logging.info(
         f"Obtained most likely forum xpath for forum {forum['url']}: {xpath_pattern} with a score of {xpath_score}.")
@@ -197,10 +232,9 @@ def extract_posts(forum):
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
 
-    result = {'url': forum['url'], 'xpath_pattern': xpath_pattern,
-              'xpath_score': xpath_score, 'forum_posts': forum_posts,
-              'dragnet': None, 'url_xpath_pattern': None,
-              'date_xpath_pattern': None, 'user_xpath_pattern': None, 'text_xpath_pattern': None}
+    result['xpath_pattern'] = xpath_pattern
+    result['xpath_score'] = xpath_score
+    result['forum_posts'] = forum_posts
 
     if xpath_pattern:
         result['text_xpath_pattern'] = get_text_xpath_pattern(dom, xpath_pattern, forum_posts)
