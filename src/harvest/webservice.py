@@ -37,7 +37,8 @@ def events():
         doc_id = forum['url']
 
         if 'text' in forum:
-            new_search_start_index = get_start_end_for_post(post_dict, forum['text'], search_start_index)
+            new_search_start_index = get_start_end_for_post(post_dict, forum['text'], search_start_index,
+                                                            fuzzy_search=True)
             if new_search_start_index > 0:
                 search_start_index = new_search_start_index
 
