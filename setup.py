@@ -40,6 +40,7 @@ setup(
         'dateparser',
         'numpy',
         'inscriptis',
-        'flask'
+        'flask',
+        'fuzzywuzzy'
     ]
 )
