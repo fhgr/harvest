@@ -17,43 +17,44 @@ def events():
     post_0 = posts.extract_posts(forum)
 
     results = {'entities': {}}
-    search_start_index = 0
-    for post_1 in extract.extract_posts(
-            forum['html'],
-            forum['url'],
-            post_0['text_xpath_pattern'],
-            post_0['url_xpath_pattern'],
-            post_0['date_xpath_pattern'],
-            post_0['user_xpath_pattern'], result_as_datetime=False):
+    if post_0['text_xpath_pattern']:
+        search_start_index = 0
+        for post_1 in extract.extract_posts(
+                forum['html'],
+                forum['url'],
+                post_0['text_xpath_pattern'],
+                post_0['url_xpath_pattern'],
+                post_0['date_xpath_pattern'],
+                post_0['user_xpath_pattern'], result_as_datetime=False):
 
-        post_dict = {
-            'user': {'surface_form': post_1.user},
-            'datetime': {'surface_form': post_1.date},
-            'post_link': {'surface_form': post_1.url},
-            'post_text': {'surface_form': post_1.post}
-        }
-
-        # doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
-        doc_id = forum['url']
-
-        if 'text' in forum:
-            new_search_start_index = get_start_end_for_post(post_dict, forum['text'], search_start_index,
-                                                            fuzzy_search=True)
-            if new_search_start_index > 0:
-                search_start_index = new_search_start_index
-
-        results['entities'][doc_id] = results['entities'].get(doc_id, [])
-        for item in ['user', 'datetime', 'post_link', 'post_text']:
-            result = {
-                'doc_id': doc_id,
-                'type': item,
-                'surface_form': post_dict[item]['surface_form']
+            post_dict = {
+                'user': {'surface_form': post_1.user},
+                'datetime': {'surface_form': post_1.date},
+                'post_link': {'surface_form': post_1.url},
+                'post_text': {'surface_form': post_1.post}
             }
-            if 'start' in post_dict[item] and 'end' in post_dict[item]:
-                result['start'] = post_dict[item]['start']
-                result['end'] = post_dict[item]['end']
 
-            results['entities'][doc_id].append(result)
+            # doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
+            doc_id = forum['url']
+
+            if 'text' in forum:
+                new_search_start_index = get_start_end_for_post(post_dict, forum['text'], search_start_index,
+                                                                fuzzy_search=True)
+                if new_search_start_index > 0:
+                    search_start_index = new_search_start_index
+
+            results['entities'][doc_id] = results['entities'].get(doc_id, [])
+            for item in ['user', 'datetime', 'post_link', 'post_text']:
+                result = {
+                    'doc_id': doc_id,
+                    'type': item,
+                    'surface_form': post_dict[item]['surface_form']
+                }
+                if 'start' in post_dict[item] and 'end' in post_dict[item]:
+                    result['start'] = post_dict[item]['start']
+                    result['end'] = post_dict[item]['end']
+
+                results['entities'][doc_id].append(result)
 
     return jsonify(results)
 
