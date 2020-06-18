@@ -63,8 +63,6 @@
 # -----------
 # * remove posts that exceed a certain length and URL threshold (spam) - compare: http://blog.angelman-asa.org (liuchunkai)
 
-from itertools import chain
-
 from harvest.cleanup.forum_post import remove_boilerplate
 from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
                            get_xpath_tree_text)
@@ -72,41 +70,22 @@ from harvest.metadata.link import get_link
 from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
 from harvest.metadata.usertext import get_text_xpath_pattern
+from harvest.similarity_calculator import assess_node
 from inscriptis import get_text
 
 from lxml import etree
 import logging
 import re
-import numpy as np
 
-# CORPUS = "../../workspace.python/path-extractor-ai/tests/pathextractor_ai_tests/full_training_data/"
 CORPUS = "./data/forum/"
 
 # number of characters required for a match
 MATCH_PREFIX_SIZE = 30
-VSM_MODEL_SIZE = 5000
 
-# tags that are not allowed to be part of a forum xpath (lowercase)
-BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
 BLACKLIST_POST_TEXT_TAG = ('h1', 'h2', 'h3', 'h4', 'h5', 'a')
-REWARDED_CLASSES = ('content', 'message', 'post')
 
 # minimum number of posts we suspect on the page
 MIN_POST_COUNT = 3
-
-
-def text_to_vsm(text):
-    '''
-    translates a text into the vector space model
-    using the hashing trick.
-
-    VSM_MODEL_SIZE determines the size of the vsm.
-    '''
-    vms = np.full(VSM_MODEL_SIZE, 0)
-    for word in text.split():
-        index = word.__hash__() % VSM_MODEL_SIZE
-        vms[index] += 1
-    return vms
 
 
 def get_matching_element(comment, dom):
@@ -133,71 +112,6 @@ def get_xpath_tree(comment, dom, tree):
     return (None, None) if element is None else (element, tree.getpath(element))
 
 
-def decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
-    decendants = set([t.tag for t in chain(*[e.iterdescendants() for e in dom.xpath(xpath)])])
-    for tag in blacklisted_tags:
-        if tag in decendants:
-            return True
-    return False
-
-
-def ancestors_contains_blacklisted_tag(xpath_string, blacklisted_tags):
-    '''
-    returns
-    -------
-    True, if the xpath_string (i.e. the ancestors) contains any blacklisted_tag
-    '''
-    xpath = xpath_string.split("/")
-    for tag in blacklisted_tags:
-        if tag in xpath:
-            return True
-    return False
-
-
-def ancestors_contains_class(xpath, rewarded_classes):
-    classes_x_path = re.findall(r"(?!.*\[)@class=\".*\"", xpath)
-    if classes_x_path:
-        classes = [x.lower() for x in list(filter(None, re.sub(r"@class=|\"", "", classes_x_path[-1]).split(" ")))]
-        for html_class in classes:
-            for rewarded_class in rewarded_classes:
-                if rewarded_class in html_class:
-                    return True
-
-
-def assess_node(reference_content, dom, xpath, blacklisted_tags, rewarded_classes=[]):
-    '''
-    returns
-    -------
-    a metric that is based on
-      (i) the vector space model and
-     (ii) the number of returned elements
-    (iii) whether the descendants contain any blacklisted tags
-    to assess whether the node is likely to be part of a forum post.
-    '''
-    if xpath == "//" or decendants_contain_blacklisted_tag(xpath, dom, blacklisted_tags):
-        return 0., 1
-
-    xpath_content_list = get_xpath_tree_text(dom, xpath)
-    xpath_element_count = len(xpath_content_list)
-
-    reference_vsm = text_to_vsm(reference_content)
-    xpath_vsm = text_to_vsm(' '.join(xpath_content_list))
-
-    divisor = (np.linalg.norm(reference_vsm) * np.linalg.norm(xpath_vsm))
-    if not divisor:
-        logging.warning("Cannot compute similarity - empty reference (%s) or xpath (%ss) text.", reference_content,
-                        ' '.join(xpath_content_list))
-        return 0., 1
-    similarity = np.dot(reference_vsm, xpath_vsm) / divisor
-
-    # discount any node that contains BLACKLIST_TAGS
-    if ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
-        similarity /= 10
-    elif ancestors_contains_class(xpath, rewarded_classes):
-        similarity += 0.3
-    return similarity, xpath_element_count
-
-
 def _remove_trailing_p_element(xpath):
     """
     The p elements at the end can be removed. Some posts have several p elements and some have none at all.
@@ -216,10 +130,9 @@ def _remove_trailing_p_element(xpath):
 def extract_posts(forum):
     dom = get_html_dom(forum['html'])
     tree = etree.ElementTree(dom)
-    # content_comments = extract_comments(forum['html']).strip()
 
     comments = []
-    # remove blacklisted items and use inscriptis if dragnet has failed
+    # remove blacklisted items
     content_comments = get_text(forum['html'])
     for comment in (c for c in content_comments.split("\n") if c.strip()):
         if 'copyright' not in comment.lower():
@@ -241,8 +154,7 @@ def extract_posts(forum):
             xpath_pattern = _remove_trailing_p_element(xpath_pattern)
 
             xpath_score, xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
-                                                           xpath=xpath_pattern, blacklisted_tags=BLACKLIST_TAGS,
-                                                           rewarded_classes=REWARDED_CLASSES)
+                                                           xpath=xpath_pattern, reward_classes=True)
             if xpath_element_count > 1:
                 candidate_xpaths.append((xpath_score, xpath_element_count, xpath_pattern))
 
@@ -259,7 +171,7 @@ def extract_posts(forum):
     while True:
         new_xpath_pattern = xpath_pattern + "/.."
         new_xpath_score, new_xpath_element_count = assess_node(reference_content=content_comments, dom=dom,
-                                                               xpath=new_xpath_pattern, blacklisted_tags=BLACKLIST_TAGS)
+                                                               xpath=new_xpath_pattern)
         if new_xpath_element_count < MIN_POST_COUNT:  #
             break
 
@@ -270,7 +182,7 @@ def extract_posts(forum):
     candidate_xpaths = []
     for final_xpath in get_xpath_combinations_for_classes(xpath_pattern):
         new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_content, dom=dom,
-                                                               xpath=final_xpath, blacklisted_tags=BLACKLIST_TAGS)
+                                                               xpath=final_xpath)
         if (xpath_element_count < new_xpath_element_count <= xpath_element_count + 2 or
             xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
             candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
