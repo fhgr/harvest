@@ -112,7 +112,7 @@ def _get_xpath_tree(comment, dom, tree):
     return (None, None) if element is None else (element, tree.getpath(element))
 
 
-def _remove_trailing_p_element(xpath):
+def _remove_trailing_p_element(xpath_score, xpath_element_count, xpath, reference_text, dom):
     """
     The p elements at the end can be removed. Some posts have several p elements and some have none at all.
     Those without p element can then not be detected. As Example, leading post can not be detected:
@@ -124,7 +124,11 @@ def _remove_trailing_p_element(xpath):
     Returns:
 
     """
-    return re.sub(r'(?<!([\/]))\/p$', '', xpath)
+    cleaned_xpath = re.sub(r'(?<!([\/]))\/p$', '', xpath)
+    if cleaned_xpath != xpath:
+        xpath_score, xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
+                                                       xpath=cleaned_xpath)
+    return xpath_score, xpath_element_count, cleaned_xpath
 
 
 def _get_cleaned_text(html):
@@ -149,7 +153,6 @@ def _get_xpaths_candidates(text_sections, dom, tree, reference_text):
         element = _get_matching_element(section_text, dom)
         if element.tag not in BLACKLIST_POST_TEXT_TAG:
             xpath_pattern = get_xpath_expression(element)
-            xpath_pattern = _remove_trailing_p_element(xpath_pattern)
 
             xpath_score, xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
                                                            xpath=xpath_pattern, reward_classes=True)
@@ -203,8 +206,8 @@ def extract_posts(forum):
     dom = get_html_dom(forum['html'])
     tree = etree.ElementTree(dom)
     result = {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
-               'xpath_score': None, 'forum_posts': None, 'date_xpath_pattern': None, 'user_xpath_pattern': None,
-               'text_xpath_pattern': None}
+              'xpath_score': None, 'forum_posts': None, 'date_xpath_pattern': None, 'user_xpath_pattern': None,
+              'text_xpath_pattern': None}
 
     text_sections = _get_cleaned_text(forum['html'])
     logging.debug(f"Extracted {len(text_sections)} lines of comments.")
@@ -219,6 +222,8 @@ def extract_posts(forum):
     # obtain anchor node
     candidate_xpaths.sort()
     xpath_score, xpath_element_count, xpath_pattern = candidate_xpaths.pop()
+    xpath_score, xpath_element_count, xpath_pattern = _remove_trailing_p_element(xpath_score, xpath_element_count,
+                                                                                 xpath_pattern, reference_text, dom)
 
     xpath_pattern, xpath_score = _get_entire_post(xpath_pattern, xpath_score, reference_text, dom)
 
