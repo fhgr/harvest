@@ -136,7 +136,7 @@ def _get_cleaned_text(html):
     text = get_text(html)
     # remove sections after copyright found in text
     for comment in (c for c in text.split("\n") if c.strip()):
-        if 'copyright' not in comment.lower():
+        if 'copyright' not in comment.lower() and '©' not in comment.lower():
             text_sections.append(comment.strip())
         else:
             break
