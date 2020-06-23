@@ -55,13 +55,13 @@ def main():
                 with open(result_fname, 'a+') as g:
                     csvwriter = writer(g)
                     if os.stat(result_fname).st_size == 0:
-                        csvwriter.writerow(['post_link', 'user', 'date', 'post'])
+                        csvwriter.writerow(['forum_link', 'post_link', 'user', 'date', 'post'])
                     for post in extract_posts(forum['html'], forum['url'],
                                               extract_post_result['text_xpath_pattern'],
                                               extract_post_result['url_xpath_pattern'],
                                               extract_post_result['date_xpath_pattern'],
                                               extract_post_result['user_xpath_pattern']):
-                        csvwriter.writerow([post.url, post.user, post.date, post.post])
+                        csvwriter.writerow([forum['url'], post.url, post.user, post.date, post.post])
 
     with open(args.output_file, "w") as f:
         dump(result, f, indent=True)
