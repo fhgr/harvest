@@ -2,19 +2,7 @@
 
 # Forum Extraction AI and heuristic
 # ---------------------------------
-# (C)opyrights 2019 Albert Weichselbraun
-
-# potential improvements
-# ======================
-#
-# - include background knowledge
-#   - blacklist hmlt/head, aside, ...
-# - remove text found in blacklisted paths, to increase the metric's accuracy
-
-# todo
-# ====
-# * post metadata extraction framework
-# * post cleanup framework
+# (C)opyrights 2020 Albert Weichselbraun
 
 # simplifications:
 # ================
@@ -34,21 +22,6 @@
 #     path (e.g. it is not possible that a forum post contains a 'form' or
 #     'input' element :)
 #   - there are forums that are contained in a form tag ....
-#   - changed algorithm:
-#     - do not let additional BLACKLIST_TAGS be entered
-#     - strongly discount paths that contain BLACKLIST_TAGS
-
-# open issues
-# -----------
-# * mumsnet -> does not detect first post (//div[@class="talk-post  message"]/p/../.."]) rather than //div[@class="post "])
-# * amsel.de -> only get's every second post (//td[@class="forum_message bg_7"]/..) due to different coloring ...
-# * www.msconnection.org, shift.ms -> works well, but does not get the title of the first post
-
-# determine post URL
-# ------------------
-# * relevant tags: <a> (href or name)
-# * point to the same domain, or even better also to the same page (without parameters)
-# * appear always in the same element
 
 # cleanup posts
 # -------------
@@ -58,10 +31,6 @@
 #   - user
 #   - date (subscription versus post date) => always compare dates within a page for computing the date extraction rule
 #   - replies, likes, etc.
-
-# suggestions
-# -----------
-# * remove posts that exceed a certain length and URL threshold (spam) - compare: http://blog.angelman-asa.org (liuchunkai)
 
 from harvest.cleanup.forum_post import remove_boilerplate
 from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
