@@ -11,3 +11,4 @@ def get_posts(html):
 
     return [c.text.decode("utf-8") for c in content_comments
             if not date_in_header(c.text.decode("utf-8"))]
+
