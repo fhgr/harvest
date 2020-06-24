@@ -71,7 +71,7 @@ from harvest.metadata.date import get_date
 from harvest.metadata.username import get_user
 from harvest.metadata.usertext import get_text_xpath_pattern
 from harvest.similarity_calculator import assess_node
-from inscriptis import get_text
+from harvest.post_text import get_cleaned_text
 
 from lxml import etree
 import logging
@@ -129,18 +129,6 @@ def _remove_trailing_p_element(xpath_score, xpath_element_count, xpath, referenc
         xpath_score, xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
                                                        xpath=cleaned_xpath)
     return xpath_score, xpath_element_count, cleaned_xpath
-
-
-def _get_cleaned_text(html):
-    text_sections = []
-    text = get_text(html)
-    # remove sections after copyright found in text
-    for comment in (c for c in text.split("\n") if c.strip()):
-        if 'copyright' not in comment.lower() and '©' not in comment.lower():
-            text_sections.append(comment.strip())
-        else:
-            break
-    return text_sections
 
 
 def _get_xpaths_candidates(text_sections, dom, tree, reference_text):
@@ -209,7 +197,7 @@ def extract_posts(forum):
               'xpath_score': None, 'forum_posts': None, 'date_xpath_pattern': None, 'user_xpath_pattern': None,
               'text_xpath_pattern': None}
 
-    text_sections = _get_cleaned_text(forum['html'])
+    text_sections = get_cleaned_text(forum['html'])
     logging.debug(f"Extracted {len(text_sections)} lines of comments.")
     reference_text = " ".join(text_sections)
 
