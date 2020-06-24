@@ -8,7 +8,7 @@ from harvest.posts import extract_posts
 @pytest.fixture
 def load_test_data():
     def _load_test_data(file_name):
-        file_path = os.path.join(os.path.dirname(__file__), '../../data/forum', file_name)
+        file_path = os.path.join(os.path.dirname(__file__), '../../../data/forum', file_name)
         with gzip.open(file_path) as f:
             return load(f)
 
