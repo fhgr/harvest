@@ -155,11 +155,11 @@ def generate_forum_url(url, num_posts):
     return [urljoin(url, f'#{no}') for no in range(1, num_posts + 1)]
 
 
-def get_same_number_of_url_as_posts(length_forum_post, forum_urls):
-    result = forum_urls[:]
-    if len(forum_urls) != length_forum_post and len(forum_urls) == 1:
-        for x in range(0, length_forum_post - 1):
-            result.append(forum_urls[0])
+def _get_same_size_as_posts(length_forum_post, forum_element):
+    result = forum_element[-length_forum_post:]
+    if len(forum_element) != length_forum_post:
+        for x in range(0, length_forum_post - len(forum_element)):
+            result.append(forum_element[0])
     return result
 
 
@@ -207,7 +207,9 @@ def extract_posts(html_content, url, post_xpath, post_url_xpath,
         if post_user_xpath else len(forum_posts) * ['']
 
     add_anonymous_user(dom, forum_users, post_xpath, post_user_xpath)
-    forum_urls = get_same_number_of_url_as_posts(len(forum_posts), forum_urls)
+    forum_urls = _get_same_size_as_posts(len(forum_posts), forum_urls)
+    forum_dates = _get_same_size_as_posts(len(forum_posts), forum_dates)
+    forum_users = _get_same_size_as_posts(len(forum_posts), forum_users)
 
     return [ExtractionResult(post, url, date, user)
             for post, url, date, user in zip(forum_posts, forum_urls,

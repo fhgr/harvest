@@ -9,7 +9,7 @@ VSM_MODEL_SIZE = 5000
 
 # tags that are not allowed to be part of a forum xpath (lowercase)
 BLACKLIST_TAGS = ('option', 'footer', 'form', 'head', 'tfoot')
-REWARDED_CLASSES = ('content', 'message', 'post')
+REWARDED_CLASSES = ('content', 'message', 'post', 'wrapper')
 
 
 def _text_to_vsm(text):
@@ -87,5 +87,5 @@ def assess_node(reference_content, dom, xpath, reward_classes=False):
     if _ancestors_contains_blacklisted_tag(xpath, BLACKLIST_TAGS):
         similarity /= 10
     elif reward_classes and _ancestors_contains_class(xpath, REWARDED_CLASSES):
-        similarity += 0.3
+        similarity += 0.1
     return similarity, xpath_element_count
