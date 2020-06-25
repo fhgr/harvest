@@ -6,13 +6,10 @@ from fuzzywuzzy import fuzz
 
 from harvest.webservice import get_flask_app
 
-# @Todo text differs a lot from expected text -> test_forum_ubuntuusers
-# @Todo text not recognized -> test_forum_futura_sciences
-# @Todo text not recognized -> test_forum_healthunlocked
-# @Todo header as text recognized -> test_forum_myparkinsons
+
+# @Todo lead post not detected-> test_forum_healthunlocked
 # @Todo not recognized because of inscriptis -> test_forum_proxer
-# @Todo text not recognized -> test_forum_shift_ms
-# @Todo text not recognized -> test_forum_airliners
+# @Todo lead post not detected -> test_forum_shift_ms
 # @Todo text not recognized -> test_forum_computerbase
 # @Todo text not recognized -> test_forum_drwindows
 # @Todo text not recognized -> test_forum_medhelp
@@ -34,6 +31,18 @@ def compare():
                         assert gold_annotation[element]['surface_form'] == response[index][element]['surface_form']
 
     return _compare
+
+
+@pytest.fixture
+def remove_index():
+    def _remove_index(response, indexes_to_remove):
+        final_response = []
+        for index, response_element in enumerate(response, start=0):
+            if index not in indexes_to_remove:
+                final_response.append(response_element)
+        return final_response
+
+    return _remove_index
 
 
 @pytest.fixture
@@ -174,6 +183,15 @@ def test_forum_statcounter(load_test_data, test_client, compare):
     compare(forum_test_data['gold_standard_annotation'], response, ['datetime', 'user', 'post_link'])
 
 
+def test_forum_ubuntuusers(load_test_data, test_client, compare):
+    forum_test_data = load_test_data("forum.ubuntuusers.de.topic.appimage-programm-in-alle-programme-als-icon-a..json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime', 'user', 'post_link'], ratio=78)
+
+
 def test_forum_utorrent(load_test_data, test_client, compare):
     forum_test_data = load_test_data("forum.utorrent.com.topic.23012-check-on-startup..json")
     response = test_client.post('/extract_from_html',
@@ -208,6 +226,17 @@ def test_forum_worldofplayers(load_test_data, test_client, compare):
                                 json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
                                       'gold_standard_format': True})
     response = loads(response.data)
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime'])
+
+
+def test_forum_futura_sciences(load_test_data, test_client, compare, remove_index):
+    forum_test_data = load_test_data("forums.futura-sciences.com.annonces-officielles.78761-moderateurs.html.json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    # Remove the advertisement slots
+    response = remove_index(response, [1, 6, 8, 15, 22, 29])
     compare(forum_test_data['gold_standard_annotation'], response, ['datetime'])
 
 
@@ -258,6 +287,17 @@ def test_forum_kiwifarms(load_test_data, test_client, compare):
     compare(forum_test_data['gold_standard_annotation'], response, ['datetime', 'user'])
 
 
+def test_forum_myparkinsons(load_test_data, test_client, compare, remove_index):
+    forum_test_data = load_test_data("myparkinsons.org.cgi-bin.forum.topic_show.pl.5256.json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    # Remove header that looks exactly like the posts
+    response = remove_index(response, [0, 1])
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime', 'post_link'], ratio=90)
+
+
 def test_forum_skyscraperpage(load_test_data, test_client, compare):
     forum_test_data = load_test_data("skyscraperpage.com.forum.showthread.php.json")
     response = test_client.post('/extract_from_html',
@@ -296,6 +336,15 @@ def test_forum_blizzard(load_test_data, test_client, compare):
     compare(forum_test_data['gold_standard_annotation'], response)
 
 
+def test_forum_airliners(load_test_data, test_client, compare):
+    forum_test_data = load_test_data("www.airliners.net.forum.viewtopic.php.1428699.json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime'], ratio=85)
+
+
 def test_forum_amsel(load_test_data, test_client, compare):
     forum_test_data = load_test_data("www.amsel.de.multiple-sklerose-forum..json")
     response = test_client.post('/extract_from_html',
@@ -313,6 +362,16 @@ def test_forum_android_hilfe(load_test_data, test_client, compare):
                                       'gold_standard_format': True})
     response = loads(response.data)
     compare(forum_test_data['gold_standard_annotation'], response, ['user'])
+
+
+def test_forum_computerbase(load_test_data, test_client, compare):
+    forum_test_data = load_test_data(
+        "www.computerbase.de.forum.threads.ram-empfehlung-fuer-ryzen.1940441..json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime'], ratio=85)
 
 
 def test_forum_fanfiction(load_test_data, test_client, compare):

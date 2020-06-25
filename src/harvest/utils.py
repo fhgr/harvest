@@ -3,6 +3,7 @@ Functions that are shared across modules.
 '''
 
 import re
+
 from lxml import etree
 
 VALID_NODE_TYPE_QUALIFIERS = ('class',)
@@ -81,7 +82,7 @@ def get_xpath_expression(element, parent_element=None, single_class_filter=False
         if not has_class_filter and "[" in xpath_expression:
             has_class_filter = True
         # Todo does this improve the detection overall?
-        #if not has_class_filter:
+        # if not has_class_filter:
         #    xpath_expression = xpath_expression + "[not(@class)]"
         xpath_list.append(xpath_expression)
 
@@ -191,3 +192,9 @@ def get_merged_xpath(xpaths):
                         merged_xpaths[xpath] = merged_xpath
 
     return list(merged_xpaths.values())
+
+
+def get_grandparent(element):
+    if etree.iselement(element) and etree.iselement(element.getparent()) and \
+            etree.iselement(element.getparent().getparent()):
+        return element.getparent().getparent()

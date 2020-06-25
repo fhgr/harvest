@@ -32,19 +32,20 @@
 #   - date (subscription versus post date) => always compare dates within a page for computing the date extraction rule
 #   - replies, likes, etc.
 
-from harvest.cleanup.forum_post import remove_boilerplate
-from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
-                           get_xpath_tree_text)
-from harvest.metadata.link import get_link
-from harvest.metadata.date import get_date
-from harvest.metadata.username import get_user
-from harvest.metadata.usertext import get_text_xpath_pattern
-from harvest.similarity_calculator import assess_node
-from harvest.post_text import get_cleaned_text
-
-from lxml import etree
 import logging
 import re
+
+from lxml import etree
+
+from harvest.cleanup.forum_post import remove_boilerplate
+from harvest.metadata.date import get_date
+from harvest.metadata.link import get_link
+from harvest.metadata.username import get_user
+from harvest.metadata.usertext import get_text_xpath_pattern
+from harvest.post_text import get_cleaned_text
+from harvest.similarity_calculator import assess_node
+from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
+                           get_xpath_tree_text, get_grandparent)
 
 CORPUS = "./data/forum/"
 
@@ -109,7 +110,8 @@ def _get_xpaths_candidates(text_sections, dom, tree, reference_text):
             continue
         element = _get_matching_element(section_text, dom)
         if element.tag not in BLACKLIST_POST_TEXT_TAG:
-            xpath_pattern = get_xpath_expression(element)
+            xpath_pattern = get_xpath_expression(element, parent_element=get_grandparent(element),
+                                                 single_class_filter=True)
 
             xpath_score, xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
                                                            xpath=xpath_pattern, reward_classes=True)
