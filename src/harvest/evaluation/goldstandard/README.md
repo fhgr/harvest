@@ -3,6 +3,7 @@
 ```
 {
     "id": ""
+    "url": ""
     "html": "..."
     "text": "Only the text of the html. Referenced as full text"
     "gold_standard_annotation": [{
