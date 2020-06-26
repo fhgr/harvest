@@ -198,3 +198,12 @@ def get_grandparent(element):
     if etree.iselement(element) and etree.iselement(element.getparent()) and \
             etree.iselement(element.getparent().getparent()):
         return element.getparent().getparent()
+
+
+def elements_have_no_overlap(elements):
+    for element in elements:
+        for element_to_compare in [child for child in [x for x in elements if x is not element]]:
+            for child_element in element.iterdescendants():
+                if element_to_compare is child_element:
+                    return False
+    return True

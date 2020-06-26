@@ -45,7 +45,7 @@ from harvest.metadata.usertext import get_text_xpath_pattern
 from harvest.post_text import get_cleaned_text
 from harvest.similarity_calculator import assess_node
 from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
-                           get_xpath_tree_text, get_grandparent)
+                           get_xpath_tree_text, get_grandparent, elements_have_no_overlap)
 
 CORPUS = "./data/forum/"
 
@@ -153,7 +153,8 @@ def _get_combination_of_posts(xpath_pattern, xpath_score, xpath_element_count, r
                                                                xpath=final_xpath)
         if (xpath_element_count < new_xpath_element_count <= xpath_element_count + 2 or
             xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
-            candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
+            if elements_have_no_overlap(dom.xpath(final_xpath)):
+                candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
 
     if candidate_xpaths:
         candidate_xpaths.sort()

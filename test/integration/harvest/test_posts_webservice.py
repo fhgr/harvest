@@ -10,8 +10,6 @@ from harvest.webservice import get_flask_app
 # @Todo lead post not detected-> test_forum_healthunlocked
 # @Todo not recognized because of inscriptis -> test_forum_proxer
 # @Todo lead post not detected -> test_forum_shift_ms
-# @Todo text not recognized -> test_forum_computerbase
-# @Todo text not recognized -> test_forum_drwindows
 # @Todo text not recognized -> test_forum_medhelp
 # @Todo text not recognized -> test_forum_medschat
 # @Todo text not recognized -> test_forum_msworld
@@ -372,6 +370,16 @@ def test_forum_computerbase(load_test_data, test_client, compare):
                                       'gold_standard_format': True})
     response = loads(response.data)
     compare(forum_test_data['gold_standard_annotation'], response, ['datetime'], ratio=85)
+
+
+def test_forum_drwindows(load_test_data, test_client, compare):
+    forum_test_data = load_test_data(
+        "www.drwindows.de.windows-7-allgemein.16340-zufall-entdeckte-problemlsungen.html.json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime', 'user', 'post_link'], ratio=89)
 
 
 def test_forum_fanfiction(load_test_data, test_client, compare):
