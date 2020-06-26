@@ -10,11 +10,9 @@ from harvest.webservice import get_flask_app
 # @Todo lead post not detected-> test_forum_healthunlocked
 # @Todo not recognized because of inscriptis -> test_forum_proxer
 # @Todo lead post not detected -> test_forum_shift_ms
-# @Todo text not recognized -> test_forum_medhelp
+# @Todo lead post not detected- -> test_forum_medhelp
 # @Todo text not recognized -> test_forum_medschat
-# @Todo text not recognized -> test_forum_msworld
-# @Todo text not recognized -> test_forum_musiker_board
-# @Todo text not recognized -> test_forum_paradisi
+# @Todo text not recognized because to many other threads recommendations -> test_forum_paradisi
 
 @pytest.fixture
 def compare():
@@ -430,6 +428,15 @@ def test_forum_med1(load_test_data, test_client, compare):
     compare(forum_test_data['gold_standard_annotation'], response, ['post_link'])
 
 
+def test_forum_msworld(load_test_data, test_client, compare):
+    forum_test_data = load_test_data("www.msworld.org.forum.showthread.php.json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime'])
+
+
 def test_forum_msconnection(load_test_data, test_client, compare):
     forum_test_data = load_test_data("www.msconnection.org.Discussions.f27.t79421.tp1.Does-this-sound-like-MS.json")
     response = test_client.post('/extract_from_html',
@@ -447,6 +454,16 @@ def test_forum_mumsnet(load_test_data, test_client, compare):
                                       'gold_standard_format': True})
     response = loads(response.data)
     compare(forum_test_data['gold_standard_annotation'], response)
+
+
+def test_forum_musiker_board(load_test_data, test_client, compare):
+    forum_test_data = load_test_data(
+        "www.musiker-board.de.threads.baubericht-0-14-ital-fichte-palisander.689167..json")
+    response = test_client.post('/extract_from_html',
+                                json={'html': forum_test_data['html'], 'url': forum_test_data['url'],
+                                      'gold_standard_format': True})
+    response = loads(response.data)
+    compare(forum_test_data['gold_standard_annotation'], response, ['datetime'], ratio=93)
 
 
 def test_forum_nairaland(load_test_data, test_client, compare):
