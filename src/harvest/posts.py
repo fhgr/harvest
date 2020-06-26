@@ -2,19 +2,7 @@
 
 # Forum Extraction AI and heuristic
 # ---------------------------------
-# (C)opyrights 2019 Albert Weichselbraun
-
-# potential improvements
-# ======================
-#
-# - include background knowledge
-#   - blacklist hmlt/head, aside, ...
-# - remove text found in blacklisted paths, to increase the metric's accuracy
-
-# todo
-# ====
-# * post metadata extraction framework
-# * post cleanup framework
+# (C)opyrights 2020 Albert Weichselbraun
 
 # simplifications:
 # ================
@@ -34,21 +22,6 @@
 #     path (e.g. it is not possible that a forum post contains a 'form' or
 #     'input' element :)
 #   - there are forums that are contained in a form tag ....
-#   - changed algorithm:
-#     - do not let additional BLACKLIST_TAGS be entered
-#     - strongly discount paths that contain BLACKLIST_TAGS
-
-# open issues
-# -----------
-# * mumsnet -> does not detect first post (//div[@class="talk-post  message"]/p/../.."]) rather than //div[@class="post "])
-# * amsel.de -> only get's every second post (//td[@class="forum_message bg_7"]/..) due to different coloring ...
-# * www.msconnection.org, shift.ms -> works well, but does not get the title of the first post
-
-# determine post URL
-# ------------------
-# * relevant tags: <a> (href or name)
-# * point to the same domain, or even better also to the same page (without parameters)
-# * appear always in the same element
 
 # cleanup posts
 # -------------
@@ -59,23 +32,20 @@
 #   - date (subscription versus post date) => always compare dates within a page for computing the date extraction rule
 #   - replies, likes, etc.
 
-# suggestions
-# -----------
-# * remove posts that exceed a certain length and URL threshold (spam) - compare: http://blog.angelman-asa.org (liuchunkai)
-
-from harvest.cleanup.forum_post import remove_boilerplate
-from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
-                           get_xpath_tree_text)
-from harvest.metadata.link import get_link
-from harvest.metadata.date import get_date
-from harvest.metadata.username import get_user
-from harvest.metadata.usertext import get_text_xpath_pattern
-from harvest.similarity_calculator import assess_node
-from harvest.post_text import get_cleaned_text
-
-from lxml import etree
 import logging
 import re
+
+from lxml import etree
+
+from harvest.cleanup.forum_post import remove_boilerplate
+from harvest.metadata.date import get_date
+from harvest.metadata.link import get_link
+from harvest.metadata.username import get_user
+from harvest.metadata.usertext import get_text_xpath_pattern
+from harvest.post_text import get_cleaned_text
+from harvest.similarity_calculator import assess_node
+from harvest.utils import (get_xpath_expression, get_html_dom, get_xpath_combinations_for_classes,
+                           get_xpath_tree_text, get_grandparent, elements_have_no_overlap)
 
 CORPUS = "./data/forum/"
 
@@ -140,7 +110,8 @@ def _get_xpaths_candidates(text_sections, dom, tree, reference_text):
             continue
         element = _get_matching_element(section_text, dom)
         if element.tag not in BLACKLIST_POST_TEXT_TAG:
-            xpath_pattern = get_xpath_expression(element)
+            xpath_pattern = get_xpath_expression(element, parent_element=get_grandparent(element),
+                                                 single_class_filter=True)
 
             xpath_score, xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
                                                            xpath=xpath_pattern, reward_classes=True)
@@ -182,7 +153,8 @@ def _get_combination_of_posts(xpath_pattern, xpath_score, xpath_element_count, r
                                                                xpath=final_xpath)
         if (xpath_element_count < new_xpath_element_count <= xpath_element_count + 2 or
             xpath_element_count * 2 - new_xpath_element_count in range(-1, 2)) and new_xpath_score > xpath_score:
-            candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
+            if elements_have_no_overlap(dom.xpath(final_xpath)):
+                candidate_xpaths.append((new_xpath_score, new_xpath_element_count, final_xpath))
 
     if candidate_xpaths:
         candidate_xpaths.sort()

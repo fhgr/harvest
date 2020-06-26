@@ -1,9 +1,14 @@
-'''
+"""
 link
 ----
 
 Tries to obtain the URL of the given post
-'''
+determine post URL
+------------------
+* relevant tags: <a> (href or name)
+* point to the same domain, or even better also to the same page (without parameters)
+* appear always in the same element
+"""
 import logging
 import re
 
@@ -12,11 +17,6 @@ from urllib.parse import urlparse, urljoin
 
 from harvest.utils import get_xpath_expression, get_xpath_expression_child_filter, get_merged_xpath, extract_text
 
-
-# strategy
-# --------
-# * consider decendndants as well as elements at the same level
-# * the number of URL candidates must be identical to the number of posts ;)
 
 def _get_without_post_link(path):
     """

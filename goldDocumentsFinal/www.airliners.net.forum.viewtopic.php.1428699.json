@@ -116,9 +116,9 @@
   },
   {
    "post_text": {
-    "surface_form": "Please start a new thread if a thread goes stale for 6+ months. IM messages to mods on warnings and bans will be ignored and nasty ones will result in a ban.",
+    "surface_form": "Please start a new thread if a thread goes stale for 6+ months.",
     "start": 9038,
-    "end": 9195
+    "end": 9101
    },
    "datetime": {
     "surface_form": "Fri Apr 24, 2020 1:45 am",

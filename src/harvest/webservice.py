@@ -16,7 +16,10 @@ def events():
     forum = request.json
     post_0 = posts.extract_posts(forum)
 
-    results = {'entities': {}}
+    if 'gold_standard_format' in forum and forum['gold_standard_format']:
+        results = []
+    else:
+        results = {'entities': {}}
     if post_0['text_xpath_pattern']:
         search_start_index = 0
         for post_1 in extract.extract_posts(
@@ -37,24 +40,27 @@ def events():
             # doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
             doc_id = forum['url']
 
-            if 'text' in forum:
-                new_search_start_index = get_start_end_for_post(post_dict, forum['text'], search_start_index,
-                                                                fuzzy_search=True)
-                if new_search_start_index > 0:
-                    search_start_index = new_search_start_index
+            if 'gold_standard_format' in forum and forum['gold_standard_format']:
+                results.append(post_dict)
+            else:
+                if 'text' in forum:
+                    new_search_start_index = get_start_end_for_post(post_dict, forum['text'], search_start_index,
+                                                                    fuzzy_search=True)
+                    if new_search_start_index > 0:
+                        search_start_index = new_search_start_index
 
-            results['entities'][doc_id] = results['entities'].get(doc_id, [])
-            for item in ['user', 'datetime', 'post_link', 'post_text']:
-                result = {
-                    'doc_id': doc_id,
-                    'type': item,
-                    'surface_form': post_dict[item]['surface_form']
-                }
-                if 'start' in post_dict[item] and 'end' in post_dict[item]:
-                    result['start'] = post_dict[item]['start']
-                    result['end'] = post_dict[item]['end']
+                results['entities'][doc_id] = results['entities'].get(doc_id, [])
+                for item in ['user', 'datetime', 'post_link', 'post_text']:
+                    result = {
+                        'doc_id': doc_id,
+                        'type': item,
+                        'surface_form': post_dict[item]['surface_form']
+                    }
+                    if 'start' in post_dict[item] and 'end' in post_dict[item]:
+                        result['start'] = post_dict[item]['start']
+                        result['end'] = post_dict[item]['end']
 
-                results['entities'][doc_id].append(result)
+                    results['entities'][doc_id].append(result)
 
     return jsonify(results)
 
@@ -77,6 +83,10 @@ def events_dragnet():
         })
 
     return jsonify(result)
+
+
+def get_flask_app():
+    return app
 
 
 if __name__ == '__main__':
