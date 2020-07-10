@@ -5,7 +5,9 @@ import hashlib
 
 import harvest.posts as posts
 import harvest.extract as extract
-from harvest.evaluation.dragnet import get_posts
+from harvest.evaluation.dragnet import get_posts as get_dragent_posts
+from harvest.evaluation.boilerpy3 import get_posts as get_boilerpy_posts
+from harvest.evaluation.justext import get_posts as get_justext_posts
 from harvest.evaluation.goldstandard.calculate_position import get_start_end_for_post
 
 app = Flask('harvest')
@@ -65,16 +67,13 @@ def events():
     return jsonify(results)
 
 
-@app.route('/dragnet_extract_from_html', methods=['POST'])
-def events_dragnet():
-    forum = request.json
-
-    posts = get_posts(forum['html'])
+def _get_posts(forum, get_posts):
+    forum_posts = get_posts(forum['html'])
     doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
 
     result = {'entities': {}}
     result['entities'][doc_id] = result['entities'].get(doc_id, [])
-    for post in posts:
+    for post in forum_posts:
         result['entities'][doc_id].append({
             'doc_id': doc_id,
             'type': 'post_text',
@@ -82,6 +81,21 @@ def events_dragnet():
         })
 
     return jsonify(result)
+
+
+@app.route('/dragnet_extract_from_html', methods=['POST'])
+def events_dragnet():
+    return _get_posts(request.json, get_dragent_posts)
+
+
+@app.route('/boilerpy_extract_from_html', methods=['POST'])
+def events_boilerpy():
+    return _get_posts(request.json, get_boilerpy_posts)
+
+
+@app.route('/justext_extract_from_html', methods=['POST'])
+def events_justext():
+    return _get_posts(request.json, get_justext_posts)
 
 
 def get_flask_app():
