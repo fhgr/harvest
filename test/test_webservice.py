@@ -3,15 +3,16 @@ import json
 
 
 def query():
-    service_url = 'http://localhost:5000/extract_from_html'
+    service_url = 'http://localhost:5000/boilerpy_extract_from_html'
 
-    with open('./goldDocumentsFinal/blog.angelman-asa.org.read.php.json') as gold_document:
+    with open('./goldDocumentsFinal/www.hifi-forum.de.viewthread-84-87.html.json') as gold_document:
         data = json.load(gold_document)
         test_url = data['url']
         test_html = data['html']
         test_text = data['text']
+        test_annotations = data['gold_standard_annotation']
 
-        data = {'url': test_url, 'html': test_html, 'text': test_text}
+        data = {'url': test_url, 'html': test_html, 'text': test_text, 'annotations': test_annotations}
 
         try:
             response = requests.post(service_url, json=data)

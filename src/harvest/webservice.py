@@ -68,7 +68,7 @@ def events():
 
 
 def _get_posts(forum, get_posts):
-    forum_posts = get_posts(forum['html'])
+    forum_posts = get_posts(forum['html'], forum['annotations'])
     doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
 
     result = {'entities': {}}
