@@ -3,9 +3,9 @@ import json
 
 
 def query():
-    service_url = 'http://localhost:5000/boilerpy_extract_from_html'
+    service_url = 'http://localhost:5000/dragnet_extract_from_html'
 
-    with open('./goldDocumentsFinal/www.hifi-forum.de.viewthread-84-87.html.json') as gold_document:
+    with open('./goldDocumentsFinal/blog.angelman-asa.org.read.php.json') as gold_document:
         data = json.load(gold_document)
         test_url = data['url']
         test_html = data['html']

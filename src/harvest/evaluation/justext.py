@@ -1,13 +1,25 @@
 import justext
+import lxml
 
-from harvest.evaluation.post_splitter import split_into_posts
+
+def _get_language(html):
+    lang = "English"
+    root = lxml.html.fromstring(html)
+    language_construct = root.xpath("//html/@lang")
+    if language_construct:
+        if 'de' in language_construct[0]:
+            lang = "German"
+        if 'esn_esp' in language_construct[0]:
+            lang = "Spanish"
+        if 'fr' in language_construct[0]:
+            lang = "French"
+
+    return lang
 
 
-def get_posts(html, annotations):
-    paragraphs = justext.justext(html, justext.get_stoplist("English"))
-    content = ''
-    for paragraph in paragraphs:
-        if not paragraph.is_boilerplate:
-            content += paragraph.text
-    posts = split_into_posts(content, annotations)
-    return posts
+def get_posts(html):
+    html = html.encode('utf-8')
+    paragraphs = justext.justext(html, justext.get_stoplist(_get_language(html)))
+    # content = [paragraph.text for paragraph in paragraphs if not paragraph.is_boilerplate]
+    content = " ".join([paragraph.text for paragraph in paragraphs if not paragraph.is_boilerplate])
+    return [content]
