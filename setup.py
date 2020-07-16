@@ -41,6 +41,8 @@ setup(
         'numpy',
         'inscriptis',
         'flask',
-        'fuzzywuzzy'
+        'fuzzywuzzy',
+        'Cython',
+        'dragnet',
     ]
 )
