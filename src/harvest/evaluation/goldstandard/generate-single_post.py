@@ -7,7 +7,6 @@ from collections import defaultdict
 from glob import glob
 from json import load
 
-from harvest.evaluation.goldstandard.calculate_position import get_start_end_for_post
 from harvest.evaluation.goldstandard.file import write_to_json, get_file_path
 
 logging.getLogger().setLevel(logging.INFO)
@@ -42,4 +41,4 @@ for no, fname in enumerate(glob(args.gold_document_path + "*.json")):
             }
         }]
 
-        write_to_json(forum['url'], args.result_directory, forum)
+        write_to_json(os.path.basename(fname), args.result_directory, forum)
