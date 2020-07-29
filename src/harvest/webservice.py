@@ -70,6 +70,7 @@ def events_dragnet():
     forum = request.json
 
     posts = get_posts(forum['html'])
+    # doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
     doc_id = forum['url']
 
     result = {'entities': {}}
