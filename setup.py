@@ -16,7 +16,7 @@ sys.path.insert(0, path.join(here, 'src'))
 setup(
     # Metadata
     name="harvest",
-    version="0.1",
+    version="1.0.0",
     description='Forum post harvester.',
     long_description='',
     author='Albert Weichselbraun and Roger Waldvogel',
