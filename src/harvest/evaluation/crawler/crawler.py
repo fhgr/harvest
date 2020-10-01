@@ -4,49 +4,53 @@ import argparse
 import logging
 import requests
 import hashlib
-from json import load
-from inscriptis import get_text
-from fuzzysearch import find_near_matches
+import os
+from urllib.parse import urlparse
+from json import load, dump
 
 from harvest.utils import get_html_dom, get_xpath_tree_text
 from harvest.extract import get_forum_date
 
 logging.getLogger().setLevel(logging.INFO)
 
-parser = argparse.ArgumentParser(description='Crawl website to extract web forum')
+parser = argparse.ArgumentParser(description='Crawl website to extract date from web forum')
 parser.add_argument('--result-directory', dest='result_directory', help='Directory for storing json results.')
 
 args = parser.parse_args()
 
 
-def get_normalized_elements(elements, reference_text):
-    normalized_elements = []
-    start_index = 0
-    for element in elements:
-        matches = find_near_matches(element, reference_text[start_index:], max_l_dist=30)
-        if matches:
-            normalized_elements.append(reference_text[start_index:][matches[0].start:matches[0].end])
-            start_index += matches[0].end
-        else:
-            logging.error(f'Failed to find {element}')
-            break
-    return normalized_elements
+def save_json(url, corpus_document):
+    file_name = f'{urlparse(url).path.split("/")[-1] + urlparse(url).params + urlparse(url).query}.json'
+    folder_structure = os.path.join(args.result_directory, urlparse(url).hostname)
+    file_name = os.path.join(folder_structure, file_name)
+    if not os.path.exists(folder_structure):
+        os.makedirs(folder_structure)
+    if not os.path.isfile(file_name):
+        with open(file_name, "w") as f:
+            dump(corpus_document, f, indent=True)
 
 
-with open('config/config.json', 'r') as config_file:
-    config = load(config_file)
-    for url in config["urls"]:
-        response = requests.get(url)
-        text = get_text(response.text)
-        text = " ".join([c.strip() for c in text.split("\n") if c.strip()])
-        corpus_document = {"id": f"i{int(hashlib.md5(url.encode('utf-8')).hexdigest(), 16)}",
-                           "url": url,
-                           "html": response.text,
-                           "text": text}
-        dom = get_html_dom(corpus_document["html"])
-        forum_posts = get_xpath_tree_text(dom, config["xpath_post_text"])
-        forum_dates = get_forum_date(dom, config["xpath_date"], result_as_datetime=False)
-        if len(forum_dates) == len(forum_posts):
-            normalized_forum_posts = get_normalized_elements(forum_posts, text)
-            normalized_forum_posts = get_normalized_elements(forum_posts, text)
+def start_crawl():
+    with open('config/config.json', 'r') as config_file:
+        config = load(config_file)
+        for url in config["urls"]:
+            response = requests.get(url)
+            corpus_document = {"id": f"i{int(hashlib.md5(url.encode('utf-8')).hexdigest(), 16)}",
+                               "url": url, "xpath_date": config["xpath_date"],
+                               "html": response.text,
+                               "gold_standard_annotation": []}
+            dom = get_html_dom(corpus_document["html"])
+            forum_posts = get_xpath_tree_text(dom, config["xpath_post_text"])
+            forum_dates = get_forum_date(dom, config["xpath_date"], result_as_datetime=False)
+            if len(forum_dates) == len(forum_posts):
+                for post_number, forum_date in enumerate(forum_dates):
+                    corpus_document["gold_standard_annotation"].append({"datetime": {
+                        "surface_form": forum_date,
+                        "post_number": post_number
+                    }})
+                save_json(url, corpus_document)
+            else:
+                logging.warning(f'{url} date could not be extracted')
 
+
+start_crawl()
