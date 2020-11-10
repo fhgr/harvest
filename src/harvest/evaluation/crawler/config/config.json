@@ -1,8 +1,0 @@
-{
-  "urls": [
-    "https://community.kaspersky.com/kaspersky-security-cloud-11/portuguese-in-free-version-8313",
-    "https://community.kaspersky.com/kaspersky-security-cloud-11/kaspersky-security-for-office365-bulk-import-whitelist-12089"
-  ],
-  "xpath_post_text": "//div[@class=\"post__content js-content--original qa-topic-post-content post__content--new-editor\"]",
-  "xpath_date": "//div/time[@class=\"tooltip-trigger js-tooltip-trigger  qa-latest-post-time\"][not(*) and string-length(text()) > 0]"
-}
