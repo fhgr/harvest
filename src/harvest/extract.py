@@ -16,6 +16,7 @@ from operator import itemgetter
 from urllib.parse import urljoin, urlparse
 from dateparser.search import search_dates
 from dateutil import parser
+from lxml.etree import _ElementUnicodeResult
 
 from harvest.utils import get_html_dom, get_xpath_tree_text, get_cleaned_element_text, extract_text
 
@@ -66,13 +67,15 @@ def _get_user_name(element):
 
 
 def _get_date_text(time_element, time_element_as_datetime=True):
-    is_tag_time = time_element.tag == 'time'
+    is_tag_time = hasattr(time_element, 'tag') and time_element.tag == 'time'
     if is_tag_time and 'datetime' in time_element.attrib:
         if time_element_as_datetime:
             time = time_element.attrib.get('datetime', '')
             parsed_time = parser.parse(time, ignoretz=True)
             return is_tag_time, parsed_time
 
+    if isinstance(time_element, _ElementUnicodeResult):
+        return is_tag_time, str(time_element).strip()
     return is_tag_time, get_cleaned_element_text(time_element)
 
 
@@ -93,7 +96,7 @@ def get_forum_date(dom, post_date_xpath, result_as_datetime=True):
     result = []
     date_mentions = (_get_date_text(e, time_element_as_datetime=result_as_datetime)
                      for e in dom.xpath(post_date_xpath) if
-                     e.tag == 'time' or search_dates(_get_date_text(e)[1], languages=LANGUAGES))
+                     (hasattr(e, 'tag') and e.tag == 'time') or search_dates(_get_date_text(e)[1], languages=LANGUAGES))
     for is_time_element, date_mention in date_mentions:
         found = None
         if is_time_element:
