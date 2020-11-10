@@ -44,5 +44,6 @@ setup(
         'fuzzywuzzy',
         'Cython',
         'dragnet',
+        'fuzzysearch'
     ]
 )
