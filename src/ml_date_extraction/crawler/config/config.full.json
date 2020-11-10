@@ -1,0 +1,44 @@
+{
+  "websites": [
+    {
+      "urls": [
+        "https://community.bitdefender.com/en/discussion/81455/how-to-disable-notification"
+      ],
+      "xpath_post_text": "//div/div[@class=\"Message userContent\"]",
+      "xpath_date": "//div/div/div/span/a[@class=\"Permalink\"]/time[not(*) and string-length(text()) > 0]"
+    },
+    {
+      "urls": [
+        "https://bpdfamily.com/message_board/index.php?topic=343886.0"
+      ],
+      "xpath_post_text": " //td/div[@class=\"post\"]",
+      "xpath_date": "//td/table/tr/td/table/tr/td/table/tr/td/div[@class=\"smalltext\"]/b[not(*) and string-length(text()) > 0]"
+    },
+    {
+      "urls": [
+        "http://blog.angelman-asa.org/read.php?2,132"
+      ],
+      "xpath_post_text": "//div/div[@class=\"message-body\"]",
+      "xpath_date": "//div/table/tr/td/small/text()[preceding-sibling::br]"
+    },
+    {
+      "urls": [
+        "https://bbs.archlinux.org/viewtopic.php?id=249553",
+        "https://bbs.archlinux.org/viewtopic.php?id=258428",
+        "https://bbs.archlinux.org/viewtopic.php?id=259445",
+        "https://bbs.archlinux.org/viewtopic.php?id=258264",
+        "https://bbs.archlinux.org/viewtopic.php?id=259447"
+      ],
+      "xpath_post_text": "//div[@class=\"postbody\"]",
+      "xpath_date": "//h2/span/a"
+    },
+    {
+      "urls": [
+        "https://community.kaspersky.com/kaspersky-security-cloud-11/portuguese-in-free-version-8313",
+        "https://community.kaspersky.com/kaspersky-security-cloud-11/kaspersky-security-for-office365-bulk-import-whitelist-12089"
+      ],
+      "xpath_post_text": "//div[@class=\"post__content js-content--original qa-topic-post-content post__content--new-editor\"]",
+      "xpath_date": "//div/time[@class=\"tooltip-trigger js-tooltip-trigger  qa-latest-post-time\"][not(*) and string-length(text()) > 0]"
+    }
+  ]
+}

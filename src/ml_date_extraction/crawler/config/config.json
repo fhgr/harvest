@@ -1,0 +1,11 @@
+{
+  "websites": [
+    {
+      "urls": [
+        "https://community.scope.org.uk/discussion/57774/copd"
+      ],
+      "xpath_post_text": "//div/div[@class=\"Message userContent\"]",
+      "xpath_date": "//div/div/div/span/a[@class=\"Permalink\"]/time[not(*) and string-length(text()) > 0]"
+    }
+  ]
+}
