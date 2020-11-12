@@ -44,7 +44,7 @@ def remove_index():
 @pytest.fixture
 def load_test_data():
     def _load_test_data(file_name):
-        file_path = os.path.join(os.path.dirname(__file__), '../../../goldDocumentsFinal', file_name)
+        file_path = os.path.join(os.path.dirname(__file__), '../../../corpus/goldDocumentsFinal', file_name)
         with open(file_path) as f:
             return load(f)
 
