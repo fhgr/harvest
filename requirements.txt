@@ -1,0 +1,8 @@
+lxml
+requests
+dateparser
+numpy
+inscriptis
+flask
+fuzzywuzzy
+pytest

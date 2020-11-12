@@ -42,7 +42,6 @@ setup(
         'inscriptis',
         'flask',
         'fuzzywuzzy',
-        'Cython',
-        'dragnet',
+        'Cython'
     ]
 )
