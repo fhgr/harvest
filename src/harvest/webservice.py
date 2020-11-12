@@ -1,11 +1,9 @@
 from flask import Flask
 from flask import request
 from flask import jsonify
-import hashlib
 
 import harvest.posts as posts
 import harvest.extract as extract
-from harvest.evaluation.dragnet import get_posts
 from harvest.evaluation.goldstandard.calculate_position import get_start_end_for_post
 
 app = Flask('harvest')
@@ -37,7 +35,6 @@ def events():
                 'post_text': {'surface_form': post_1.post}
             }
 
-            # doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
             doc_id = forum['url']
 
             if 'gold_standard_format' in forum and forum['gold_standard_format']:
@@ -63,26 +60,6 @@ def events():
                     results['entities'][doc_id].append(result)
 
     return jsonify(results)
-
-
-@app.route('/dragnet_extract_from_html', methods=['POST'])
-def events_dragnet():
-    forum = request.json
-
-    posts = get_posts(forum['html'])
-    # doc_id = hashlib.md5(forum['url'].encode()).hexdigest()
-    doc_id = forum['url']
-
-    result = {'entities': {}}
-    result['entities'][doc_id] = result['entities'].get(doc_id, [])
-    for post in posts:
-        result['entities'][doc_id].append({
-            'doc_id': doc_id,
-            'type': 'post_text',
-            'surface_form': post
-        })
-
-    return jsonify(result)
 
 
 def get_flask_app():
