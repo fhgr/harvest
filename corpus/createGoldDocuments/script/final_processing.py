@@ -7,8 +7,8 @@ import os
 from glob import glob
 from json import load
 from collections import defaultdict
-from harvest.evaluation.goldstandard.file import write_to_json, get_file_path
-from harvest.evaluation.goldstandard.calculate_position import get_start_end_for_post
+from corpus.createGoldDocuments.file import write_to_json, get_file_path
+from corpus.createGoldDocuments.calculate_position import get_start_end_for_post
 
 logging.getLogger().setLevel(logging.INFO)
 

@@ -14,7 +14,7 @@ from harvest import posts
 from harvest.extract import extract_posts
 from urllib.parse import urlparse
 
-from harvest.evaluation.goldstandard.file import write_to_json
+from corpus.createGoldDocuments.file import write_to_json
 
 logging.getLogger().setLevel(logging.INFO)
 

@@ -1,10 +1,15 @@
+"""
+This module is used to provide a web interface for orbis-eval [https://github.com/orbis-eval].
+With orbis-eval the scores of recall, precision and f1 is calculated.
+"""
+
 from flask import Flask
 from flask import request
 from flask import jsonify
 
 import harvest.posts as posts
 import harvest.extract as extract
-from harvest.evaluation.goldstandard.calculate_position import get_start_end_for_post
+from corpus.createGoldDocuments.calculate_position import get_start_end_for_post
 
 app = Flask('harvest')
 

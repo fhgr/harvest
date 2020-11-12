@@ -4,7 +4,7 @@ from json import load, loads
 import pytest
 from fuzzywuzzy import fuzz
 
-from harvest.webservice import get_flask_app
+from test.evaluation.webservice import get_flask_app
 
 
 # @Todo lead post not detected-> test_forum_healthunlocked
