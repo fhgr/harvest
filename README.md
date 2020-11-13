@@ -1,5 +1,7 @@
 # Forum Harvest
 
+[![Actions Status](https://github.com/fhgr/harvest/workflows/CI/badge.svg)](https://github.com/fhgr/harvest/actions)
+
 Harvest - An Open Source toolkit for extracting posts and post metadata from web forums. 
 
 ## Publication
