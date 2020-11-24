@@ -23,7 +23,7 @@
 The elements that are not correctly recognized should be corrected or supplemented. For the user the link is used if available, otherwise the displayed name.
 4. Now the script `python3 remove-link.py ./goldDocumentsPre/` is executed. This removes all links from the full text of the gold document except those of user and post_link.
 5. Now clean up the `post_text.surface_form` elements in the gold document. These must be found in the full text and must match the correct post text.
-6. Now run the script `python3 final-processing.py ./goldDocumentsPre/ --result-directory ./goldDocumentsFinal/`. If all elements are prepared correctly, a start and end position is found for each element. If this is not the case, the log will show the message "Not found in text". If start and end positions are not found, correct the pre document accordingly and generate the final document again.
+6. Now run the script `python3 final-processing.py ./goldDocumentsPre/ --result-directory ./goldDocuments/`. If all elements are prepared correctly, a start and end position is found for each element. If this is not the case, the log will show the message "Not found in text". If start and end positions are not found, correct the pre document accordingly and generate the final document again.
 7. With git commit and push to repository.
 
 **Note**: the `final-processing.py` and `pre-processing.py` scripts do not overwrite existing documents.

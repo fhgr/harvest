@@ -5,7 +5,7 @@ import json
 def query():
     service_url = 'http://localhost:5000/dragnet_extract_from_html'
 
-    with open('./goldDocumentsFinal/blog.angelman-asa.org.read.php.json') as gold_document:
+    with open('./goldDocuments/blog.angelman-asa.org.read.php.json') as gold_document:
         data = json.load(gold_document)
         test_url = data['url']
         test_html = data['html']
