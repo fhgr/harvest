@@ -8,7 +8,7 @@ Automatic extraction of forum posts and metadata is a challenging task since for
 
 At the command line:
 ```bash
-$ pip install forum-harvest
+$ pip install harvest-webforum
 ```
 
 If you want to install from the latest sources, you can do:
