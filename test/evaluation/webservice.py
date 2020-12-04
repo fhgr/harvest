@@ -17,7 +17,7 @@ app = Flask('harvest')
 @app.route('/extract_from_html', methods=['POST'])
 def events():
     forum = request.json
-    post_0 = posts.extract_posts(forum)
+    post_0 = posts.extract_posts(forum['html'], forum['url'])
 
     if 'gold_standard_format' in forum and forum['gold_standard_format']:
         results = []
