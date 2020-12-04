@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# https://github.com/dragnet-org/dragnet
-# install: python3 setup.py develop
-
-
 import sys
 from setuptools import setup, find_packages
 from os import path
@@ -12,17 +8,21 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 sys.path.insert(0, path.join(here, 'src'))
 
+from harvest import (__version__, __author__, __author_email__, __license__)
+
+with open(path.join(here, 'README.md')) as f:  # , encoding='utf-8'
+    long_description = f.read()
 
 setup(
     # Metadata
     name="harvest",
-    version="1.0.0",
-    description='Forum post harvester.',
-    long_description='',
-    author='Albert Weichselbraun and Roger Waldvogel',
-    author_email='albert.weichselbraun@fhgr.ch, roger.waldvogel@fhgr.ch',
+    version=__version__,
+    description='A toolkit for extracting posts and post metadata from web forums',
+    long_description=long_description,
+    author=__author__,
+    author_email=__author_email__,
     python_requires='>=3.5',
-    license='GPL3',
+    license=__license__,
     package_dir={'': 'src'},
 
     # Package List
@@ -41,7 +41,6 @@ setup(
         'numpy',
         'inscriptis',
         'flask',
-        'fuzzywuzzy',
-        'Cython'
+        'fuzzywuzzy'
     ]
 )
