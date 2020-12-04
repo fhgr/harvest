@@ -15,7 +15,7 @@ __author__ = 'Albert Weichselbraun, Roger Waldvogel'
 __author_email__ = 'albert.weichselbraun@fhgr.ch, roger.waldvogel@fhgr.ch'
 __copyright__ = '2019-2020 Albert Weichselbraun, Roger Waldvogel'
 __license__ = 'Apache-2.0'
-__version__ = '1.0'
+__version__ = '1.0.0'
 __status__ = 'Prototype'
 
 try:
@@ -43,9 +43,20 @@ def extract_data(html, url):
 
     """
     extract_post_result = posts.extract_posts(html, url)
-    result = extract_posts(html, url, extract_post_result['text_xpath_pattern'],
-                         extract_post_result['url_xpath_pattern'],
-                         extract_post_result['date_xpath_pattern'],
-                         extract_post_result['user_xpath_pattern'])
+    extraction_results = extract_posts(html, url, extract_post_result['text_xpath_pattern'],
+                                       extract_post_result['url_xpath_pattern'],
+                                       extract_post_result['date_xpath_pattern'],
+                                       extract_post_result['user_xpath_pattern'])
 
-    return {posts: result}
+    final_results = []
+    for extraction_result in extraction_results:
+        entity = {'post': extraction_result.post}
+        if hasattr(extraction_result, 'date'):
+            entity['date'] = extraction_result.date
+        if hasattr(extraction_result, 'url'):
+            entity['url'] = extraction_result.url
+        if hasattr(extraction_result, 'user'):
+            entity['user'] = extraction_result.user
+        final_results.append(entity)
+
+    return {posts: final_results}
