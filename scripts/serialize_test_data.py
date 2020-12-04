@@ -29,9 +29,10 @@ with open("test-urls.lst") as f:
                 encoding = 'utf8'
             html = http.read().decode(encoding)
 
-            with open(dst + ".json", 'w') as f:
+            with open("../data/" + dst + ".json", 'w') as f:
                 dump({'url': url, 'crawled': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 'html': html}, f)
-            with open(dst + ".json", 'rb') as f, gzip.open('forum/' + dst + ".json.gz", 'wb') as fgzip:
+            with open("../data/" + dst + ".json", 'rb') as f, \
+                    gzip.open('../data/forum/' + dst + ".json.gz", 'wb') as fgzip:
                 shutil.copyfileobj(f, fgzip)
         except IOError:
             with open("failed.lst", "a") as f:

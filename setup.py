@@ -30,7 +30,8 @@ setup(
 
     # Scripts
     scripts=[
-        './src/harvest/main.py'
+        './scripts/extract_to_csv.py',
+        './scripts/serialize_test_data.py'
     ],
 
     # Requirements

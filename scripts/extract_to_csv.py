@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 logging.getLogger().setLevel(logging.INFO)
 
 
-def main():
+def extract_to_csv():
     parser = argparse.ArgumentParser(
         description='Forum harvester - extracts and harvests posts + metadata from Web forums')
     parser.add_argument('corpus_path', metavar='corpus_path', help='Path to the input corpus')
@@ -68,4 +68,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    extract_to_csv()
