@@ -162,21 +162,21 @@ def _get_combination_of_posts(xpath_pattern, xpath_score, xpath_element_count, r
     return xpath_score, xpath_element_count, xpath_pattern
 
 
-def extract_posts(forum):
-    dom = get_html_dom(forum['html'])
+def extract_posts(html, url):
+    dom = get_html_dom(html)
     tree = etree.ElementTree(dom)
-    result = {'url': forum['url'], 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
+    result = {'url': url, 'dragnet': None, 'url_xpath_pattern': None, 'xpath_pattern': None,
               'xpath_score': None, 'forum_posts': None, 'date_xpath_pattern': None, 'user_xpath_pattern': None,
               'text_xpath_pattern': None}
 
-    text_sections = get_cleaned_text(forum['html'])
+    text_sections = get_cleaned_text(html)
     logging.debug(f"Extracted {len(text_sections)} lines of comments.")
     reference_text = " ".join(text_sections)
 
     candidate_xpaths = _get_xpaths_candidates(text_sections, dom, tree, reference_text)
 
     if not candidate_xpaths:
-        logging.warning("Couldn't identify any candidate posts for forum", forum['url'])
+        logging.warning("Couldn't identify any candidate posts for forum", url)
         return result
 
     # obtain anchor node
@@ -192,7 +192,7 @@ def extract_posts(forum):
                                                                                 dom)
 
     logging.info(
-        f"Obtained most likely forum xpath for forum {forum['url']}: {xpath_pattern} with a score of {xpath_score}.")
+        f"Obtained most likely forum xpath for forum {url}: {xpath_pattern} with a score of {xpath_score}.")
     if xpath_pattern:
         forum_posts = get_xpath_tree_text(dom, xpath_pattern)
         forum_posts = remove_boilerplate(forum_posts)
@@ -205,17 +205,17 @@ def extract_posts(forum):
         result['text_xpath_pattern'] = get_text_xpath_pattern(dom, xpath_pattern, forum_posts)
 
     # add the post URL
-    url_xpath_pattern = get_link(dom, xpath_pattern, forum['url'], forum_posts)
+    url_xpath_pattern = get_link(dom, xpath_pattern, url, forum_posts)
     if url_xpath_pattern:
         result['url_xpath_pattern'] = url_xpath_pattern
 
     # add the post Date
-    date_xpath_pattern = get_date(dom, xpath_pattern, forum['url'], forum_posts)
+    date_xpath_pattern = get_date(dom, xpath_pattern, url, forum_posts)
     if date_xpath_pattern:
         result['date_xpath_pattern'] = date_xpath_pattern
 
     # add the post user
-    user_xpath_pattern = get_user(dom, xpath_pattern, forum['url'], forum_posts)
+    user_xpath_pattern = get_user(dom, xpath_pattern, url, forum_posts)
     if user_xpath_pattern:
         result['user_xpath_pattern'] = user_xpath_pattern
     return result

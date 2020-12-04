@@ -47,7 +47,7 @@ def main():
                     g.write(forum['html'])
 
             logging.info("Processing " + forum['url'])
-            extract_post_result = posts.extract_posts(forum)
+            extract_post_result = posts.extract_posts(forum['html'], forum['url'])
             result[domain].append(extract_post_result)
 
             if args.result_directory and extract_post_result['text_xpath_pattern']:
