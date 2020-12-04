@@ -5,5 +5,7 @@ __pycache__/
 .cache/
 debug/
 venv
+dist
+build
 results.json
 *.egg-info
