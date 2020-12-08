@@ -1,6 +1,11 @@
 # Harvest - A toolkit for extracting posts and post metadata from web forums
 
-[![Actions Status](https://github.com/fhgr/harvest/workflows/CI/badge.svg)](https://github.com/fhgr/harvest/actions)
+[![Actions Status](https://github.com/fhgr/harvest/workflows/build/badge.svg)](https://github.com/fhgr/harvest/actions)
+
+[![codecov](https://codecov.io/gh/fhgr/harvest/branch/master/graph/badge.svg)](
+    https://codecov.io/gh/fhgr/harvest)
+
+[![PyPI version](https://badge.fury.io/py/harvest-webforum.svg)](https://badge.fury.io/py/harvest-webforum)
 
 Automatic extraction of forum posts and metadata is a challenging task since forums do not expose their content in a standardized structure. Harvest performs this task reliably for many web forums and offers an easy way to extract data from web forums.
 

@@ -9,3 +9,4 @@ dist
 build
 results.json
 *.egg-info
+.coverage
