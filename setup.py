@@ -24,6 +24,18 @@ setup(
     author=__author__,
     author_email=__author_email__,
     python_requires='>=3.5',
+    classifiers=[
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache-2.0',
+        'Topic :: Text Processing',
+        'Topic :: Text Processing :: Markup :: HTML',
+        'Topic :: Utilities',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+    ],
     license=__license__,
     package_dir={'': 'src'},
 
