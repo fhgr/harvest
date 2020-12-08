@@ -39,6 +39,8 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest-cov
-          pip install codecov
-          python -m pytest --rootdir test --cov=harvest
-          codecov
+          python -m pytest --rootdir test --cov=harvest --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml

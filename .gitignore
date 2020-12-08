@@ -10,3 +10,4 @@ build
 results.json
 *.egg-info
 .coverage
+coverage.xml
