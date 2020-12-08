@@ -1,7 +1,7 @@
 # Harvest - A toolkit for extracting posts and post metadata from web forums
 
 [![Actions Status](https://github.com/fhgr/harvest/workflows/build/badge.svg)](https://github.com/fhgr/harvest/actions)
-[![codecov](https://codecov.io/gh/fhgr/harvest/branch/master/graph/badge.svg)](
+[![codecov](https://codecov.io/gh/fhgr/harvest/branch/main/graph/badge.svg)](
     https://codecov.io/gh/fhgr/harvest)
 [![PyPI version](https://badge.fury.io/py/harvest-webforum.svg)](https://badge.fury.io/py/harvest-webforum)
 
