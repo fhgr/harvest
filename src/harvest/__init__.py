@@ -36,11 +36,12 @@ RE_STRIP_XML_DECLARATION = re.compile(r'^<\?xml [^>]+?\?>')
 
 def extract_data(html, url):
     """
-
+    Extracts posts from an html
     Args:
-
+    html (string): html of the web forum
+    url (string): the url to the html
     Returns:
-
+    Dictionary: posts with metadata
     """
     extract_post_result = posts.extract_posts(html, url)
     extraction_results = extract_posts(html, url, extract_post_result['text_xpath_pattern'],
