@@ -15,7 +15,7 @@ __author__ = 'Albert Weichselbraun, Roger Waldvogel'
 __author_email__ = 'albert.weichselbraun@fhgr.ch, roger.waldvogel@fhgr.ch'
 __copyright__ = '2019-2020 Albert Weichselbraun, Roger Waldvogel'
 __license__ = 'Apache-2.0'
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 __status__ = 'Prototype'
 
 try:
@@ -46,17 +46,18 @@ def extract_data(html, url):
     extraction_results = extract_posts(html, url, extract_post_result['text_xpath_pattern'],
                                        extract_post_result['url_xpath_pattern'],
                                        extract_post_result['date_xpath_pattern'],
-                                       extract_post_result['user_xpath_pattern'])
+                                       extract_post_result['user_xpath_pattern'],
+                                       result_as_datetime=False)
 
     final_results = []
     for extraction_result in extraction_results:
-        entity = {'post': extraction_result.post}
+        entity = {'post_text': extraction_result.post}
         if hasattr(extraction_result, 'date'):
-            entity['date'] = extraction_result.date
+            entity['datetime'] = extraction_result.date
         if hasattr(extraction_result, 'url'):
-            entity['url'] = extraction_result.url
+            entity['post_link'] = extraction_result.url
         if hasattr(extraction_result, 'user'):
             entity['user'] = extraction_result.user
         final_results.append(entity)
 
-    return {posts: final_results}
+    return {"posts": final_results}
