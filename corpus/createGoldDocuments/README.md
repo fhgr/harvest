@@ -15,7 +15,7 @@
 }
 ```
 ## Instruction
-1. First you need to download the forum pages for which you want to create a gold document. This is done by executing the script `data/serialize-test-data.py`. But first you have to add or comment out (remove # at the beginning) the url of the forum page in the file `data/test-urls.lst`.
+1. First you need to download the forum pages for which you want to create a gold document. This is done by executing the script `script/serialize-test-data.py`. But first you have to add or comment out (remove # at the beginning) the url of the forum page in the file `data/forum/test-urls.lst`.
 2. Next, a first version of the gold document is created with `pre-processing.py`. Example command:
 `python3  pre-processing.py ./data/forum/ --result-directory ./goldDocumentsPre/`
 3. The next step is to clean up the document for the following elements:
