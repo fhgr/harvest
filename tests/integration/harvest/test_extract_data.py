@@ -337,4 +337,4 @@ def test_forum_neowin(load_test_data, compare):
 def test_forum_pistonheads(load_test_data, compare):
     forum_test_data = load_test_data("www.pistonheads.com.gassing.topic.asp.1858583.json")
     response = extract_data(forum_test_data['html'], forum_test_data['url'])['posts']
-    compare(forum_test_data['gold_standard_annotation'], response, ['post_link'])
+    compare(forum_test_data['gold_standard_annotation'], response, ['post_link', 'datetime'])
