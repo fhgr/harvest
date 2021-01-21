@@ -121,7 +121,7 @@ def _get_xpaths_candidates(text_sections, dom, tree, reference_text):
     return candidate_xpaths
 
 
-def _get_entire_post(xpath_pattern, xpath_score, reference_text, dom):
+def _get_post_frame(xpath_pattern, xpath_score, reference_text, dom):
     while True:
         new_xpath_pattern = xpath_pattern + "/.."
         new_xpath_score, new_xpath_element_count = assess_node(reference_content=reference_text, dom=dom,
@@ -185,7 +185,7 @@ def extract_posts(html, url):
     xpath_score, xpath_element_count, xpath_pattern = _remove_trailing_p_element(xpath_score, xpath_element_count,
                                                                                  xpath_pattern, reference_text, dom)
 
-    xpath_pattern, xpath_score = _get_entire_post(xpath_pattern, xpath_score, reference_text, dom)
+    xpath_pattern, xpath_score = _get_post_frame(xpath_pattern, xpath_score, reference_text, dom)
 
     xpath_score, xpath_element_count, xpath_pattern = _get_combination_of_posts(xpath_pattern, xpath_score,
                                                                                 xpath_element_count, reference_text,
